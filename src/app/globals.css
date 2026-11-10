@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-paper: #f4f0e6;
+  --color-card: #fffdf8;
+  --color-ink: #17201d;
+  --color-muted: #646b66;
+  --color-line: #ddd6c4;
+  --color-chalk: #dcf266;
+  --color-clay: #c2452d;
+  --color-moss: #2f6b4f;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-display: var(--font-instrument), Georgia, serif;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-ink text-paper hover:bg-ink/85;
+  }
+  .btn-accent {
+    @apply bg-chalk text-ink hover:brightness-95;
+  }
+  .btn-ghost {
+    @apply border border-line bg-card text-ink hover:bg-paper;
+  }
+  .btn-danger {
+    @apply border border-clay/30 bg-card text-clay hover:bg-clay/10;
+  }
+  .input {
+    @apply w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink placeholder:text-muted/60 focus:border-ink focus:outline-none;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-medium tracking-wide text-muted uppercase;
+  }
+  .card {
+    @apply rounded-2xl border border-line bg-card;
+  }
+  .page-title {
+    @apply font-display text-4xl leading-none tracking-tight;
+  }
+}
+
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  body {
+    background: white;
+  }
+}
