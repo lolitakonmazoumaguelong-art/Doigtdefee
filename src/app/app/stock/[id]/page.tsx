@@ -10,9 +10,9 @@ import { formatMoney } from "@/lib/format";
 import { getProduct } from "@/lib/queries";
 import { getStockOverview } from "@/lib/stock";
 
-export const metadata = { title: "Article" };
+export const metadata = { title: "Item" };
 
-const dateTime = new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" });
+const dateTime = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" });
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { org } = await requireSession();
@@ -34,7 +34,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         <h1 className="page-title mt-1">{product.name}</h1>
         {product.archived && (
           <p className="mt-3 inline-block rounded-lg border border-line bg-chalk/30 px-3 py-1.5 text-sm">
-            Produit arrêté : il n&apos;est plus proposé dans les devis ni dans les commandes.
+            Discontinued product: no longer offered in quotes or purchase orders.
           </p>
         )}
         <p className="mt-2 text-sm text-muted">
@@ -45,23 +45,23 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {!isService && (
           <div className={`card p-5 ${product.stock <= product.minStock ? "border-clay/40" : ""}`}>
-            <p className="label">En stock</p>
+            <p className="label">In stock</p>
             <p className={`text-2xl font-semibold tabular-nums ${product.stock <= product.minStock ? "text-clay" : ""}`}>
               {product.stock}
             </p>
-            <p className="mt-1 text-xs text-muted">Alerte à {product.minStock}</p>
+            <p className="mt-1 text-xs text-muted">Alert at {product.minStock}</p>
           </div>
         )}
         <div className="card p-5">
-          <p className="label">Prix de vente</p>
+          <p className="label">Selling price</p>
           <p className="text-2xl font-semibold tabular-nums">{formatMoney(product.unitPrice, org.currency)}</p>
         </div>
         <div className="card p-5">
-          <p className="label">Prix d&apos;achat</p>
+          <p className="label">Cost price</p>
           <p className="text-2xl font-semibold tabular-nums">{formatMoney(product.costPrice, org.currency)}</p>
         </div>
         <div className="card p-5">
-          <p className="label">Marge unitaire</p>
+          <p className="label">Unit margin</p>
           <p className="text-2xl font-semibold tabular-nums">{formatMoney(margin, org.currency)}</p>
         </div>
       </section>
@@ -69,32 +69,32 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       {!isService && line && (
         <section className="card flex flex-wrap gap-x-10 gap-y-3 p-5 text-sm">
           <p>
-            <span className="label">Disponible à la vente</span>
+            <span className="label">Available to sell</span>
             <span className="text-lg font-semibold tabular-nums">{line.available}</span>
           </p>
           <p>
-            <span className="label">Réservé à des clients</span>
+            <span className="label">Reserved for clients</span>
             <span className="text-lg font-semibold tabular-nums">{line.reserved}</span>
           </p>
           <p>
-            <span className="label">En commande</span>
+            <span className="label">On order</span>
             <span className="text-lg font-semibold tabular-nums">{line.onOrder}</span>
           </p>
           <p>
-            <span className="label">Vendu en 30 jours</span>
+            <span className="label">Sold in 30 days</span>
             <span className="text-lg font-semibold tabular-nums">{line.sold30}</span>
           </p>
           <p>
-            <span className="label">Stock restant estimé</span>
+            <span className="label">Estimated stock left</span>
             <span className="text-lg font-semibold tabular-nums">
-              {line.daysLeft === null ? "Pas assez de ventes" : `≈ ${line.daysLeft} jours`}
+              {line.daysLeft === null ? "Not enough sales" : `≈ ${line.daysLeft} days`}
             </span>
           </p>
           {line.toOrder > 0 && (
             <p className="basis-full text-clay">
-              Conseil : commander {line.toOrder} unité(s).{" "}
-              <Link href="/app/stock/reappro" className="underline underline-offset-4">
-                Voir la liste à commander
+              Suggestion: order {line.toOrder} unit(s).{" "}
+              <Link href="/app/stock/reorder" className="underline underline-offset-4">
+                See the to-order list
               </Link>
             </p>
           )}
@@ -108,9 +108,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             <InventoryForm productId={product.id} />
           </div>
           <div className="card overflow-hidden">
-            <p className="label px-5 pt-5">Historique</p>
+            <p className="label px-5 pt-5">History</p>
             {movements.length === 0 ? (
-              <p className="px-5 pb-5 text-sm text-muted">Aucun mouvement enregistré.</p>
+              <p className="px-5 pb-5 text-sm text-muted">No movements recorded.</p>
             ) : (
               <ul className="divide-y divide-line">
                 {movements.map((m) => (
@@ -134,7 +134,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       )}
 
       <section className="space-y-4">
-        <h2 className="font-display text-2xl">Modifier l&apos;article</h2>
+        <h2 className="font-display text-2xl">Edit item</h2>
         <ProductForm
           currency={org.currency}
           suppliers={suppliers}
@@ -155,13 +155,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <input type="hidden" name="id" value={product.id} />
           <input type="hidden" name="archived" value={product.archived ? "0" : "1"} />
           <button className="btn btn-ghost">
-            {product.archived ? "Remettre au catalogue" : "Produit arrêté : retirer du catalogue"}
+            {product.archived ? "Put back in catalogue" : "Discontinued: remove from catalogue"}
           </button>
         </form>
         <form action={deleteProduct}>
           <input type="hidden" name="id" value={product.id} />
-          <ConfirmButton message={`Supprimer ${product.name} du catalogue ? Les devis et factures existants gardent leurs lignes.`}>
-            Supprimer définitivement
+          <ConfirmButton message={`Delete ${product.name} from the catalogue? Existing quotes and invoices keep their lines.`}>
+            Delete permanently
           </ConfirmButton>
         </form>
       </section>

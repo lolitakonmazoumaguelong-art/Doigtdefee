@@ -12,15 +12,15 @@ export default async function ClientsPage() {
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="page-title">Clients</h1>
-        <Link href="/app/clients/nouveau" className="btn btn-primary">
-          Ajouter un client
+        <Link href="/app/clients/new" className="btn btn-primary">
+          Add a client
         </Link>
       </header>
 
       {clients.length === 0 ? (
         <div className="card p-8 text-center">
-          <p className="font-display text-2xl">Aucun client pour l&apos;instant</p>
-          <p className="mt-2 text-sm text-muted">Ajoute ton premier client pour lui préparer un devis.</p>
+          <p className="font-display text-2xl">No clients yet</p>
+          <p className="mt-2 text-sm text-muted">Add your first client to prepare a quote for them.</p>
         </div>
       ) : (
         <ul className="card divide-y divide-line overflow-hidden">
@@ -33,13 +33,13 @@ export default async function ClientsPage() {
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{client.name}</p>
                   <p className="truncate text-sm text-muted">
-                    {[client.phone, client.email].filter(Boolean).join(" · ") || "Pas de contact renseigné"}
+                    {[client.phone, client.email].filter(Boolean).join(" · ") || "No contact details"}
                   </p>
                 </div>
                 <div className="shrink-0 text-right text-xs text-muted">
-                  <p>{client.kind === "entreprise" ? "Entreprise" : "Particulier"}</p>
+                  <p>{client.kind === "entreprise" ? "Company" : "Individual"}</p>
                   <p>
-                    {client.docCount} document{client.docCount > 1 ? "s" : ""}
+                    {client.docCount} document{client.docCount === 1 ? "" : "s"}
                   </p>
                 </div>
               </Link>

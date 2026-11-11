@@ -22,8 +22,8 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
 
   const tabs = [
     { id: undefined, label: `Catalogue (${active.length})` },
-    { id: "prestations", label: "Prestations" },
-    { id: "arretes", label: `Arrêtés (${archived.length})` },
+    { id: "prestations", label: "Services" },
+    { id: "arretes", label: `Discontinued (${archived.length})` },
   ];
 
   return (
@@ -32,15 +32,15 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
         <div>
           <h1 className="page-title">Stock</h1>
           <p className="mt-2 text-sm text-muted">
-            {goods.length} article(s) · valeur d&apos;achat {formatMoney(stockValue, org.currency)}
+            {goods.length} item(s) · cost value {formatMoney(stockValue, org.currency)}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/app/stock/reappro" className={`btn ${toOrder.length ? "btn-accent" : "btn-ghost"}`}>
-            À commander ({toOrder.length})
+          <Link href="/app/stock/reorder" className={`btn ${toOrder.length ? "btn-accent" : "btn-ghost"}`}>
+            To order ({toOrder.length})
           </Link>
-          <Link href="/app/stock/nouveau" className="btn btn-primary">
-            Ajouter un article
+          <Link href="/app/stock/new" className="btn btn-primary">
+            Add an item
           </Link>
         </div>
       </header>
@@ -62,14 +62,14 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
       {shown.length === 0 ? (
         <div className="card p-8 text-center">
           <p className="font-display text-2xl">
-            {everything.length === 0 ? "Ton catalogue est vide" : "Rien à afficher ici"}
+            {everything.length === 0 ? "Your catalogue is empty" : "Nothing to show here"}
           </p>
           <p className="mt-2 text-sm text-muted">
             {everything.length === 0
-              ? "Ajoute tes caméras, enregistreurs, câbles et forfaits de pose pour les retrouver dans tes devis."
+              ? "Add your cameras, recorders, cables and installation packages to use them in your quotes."
               : view === "arretes"
-                ? "Les produits que tu retires du marché apparaîtront ici, avec leur historique."
-                : "Aucun article dans cette vue."}
+                ? "Products you discontinue will appear here, with their history."
+                : "No items in this view."}
           </p>
         </div>
       ) : (
@@ -77,9 +77,9 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
           {shown.map((p) => {
             const isService = p.kind === "service";
             const details = [
-              p.reserved > 0 && `${p.reserved} réservé(s)`,
-              p.onOrder > 0 && `${p.onOrder} en commande`,
-              p.daysLeft !== null && `≈ ${p.daysLeft} j de stock`,
+              p.reserved > 0 && `${p.reserved} reserved`,
+              p.onOrder > 0 && `${p.onOrder} on order`,
+              p.daysLeft !== null && `≈ ${p.daysLeft} days of stock`,
             ].filter(Boolean);
             return (
               <li key={p.id}>
@@ -96,15 +96,15 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
                   <p className="hidden shrink-0 text-sm tabular-nums sm:block">{formatMoney(p.unitPrice, org.currency)}</p>
                   <div className="w-36 shrink-0 text-right">
                     {isService ? (
-                      <Badge label="Prestation" tone="neutral" />
+                      <Badge label="Service" tone="neutral" />
                     ) : p.archived ? (
-                      <Badge label={`Arrêté · ${p.stock} restant(s)`} tone="neutral" />
+                      <Badge label={`Discontinued · ${p.stock} left`} tone="neutral" />
                     ) : p.available <= 0 ? (
-                      <Badge label={p.stock > 0 ? "Tout est réservé" : "Rupture"} tone="bad" />
+                      <Badge label={p.stock > 0 ? "All reserved" : "Out of stock"} tone="bad" />
                     ) : p.toOrder > 0 ? (
-                      <Badge label={`${p.available} dispo · bas`} tone="warn" />
+                      <Badge label={`${p.available} available · low`} tone="warn" />
                     ) : (
-                      <Badge label={`${p.available} dispo`} tone="good" />
+                      <Badge label={`${p.available} available`} tone="good" />
                     )}
                     {details.length > 0 && <p className="mt-1 text-xs text-muted">{details.join(" · ")}</p>}
                   </div>

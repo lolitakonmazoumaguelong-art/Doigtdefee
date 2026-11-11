@@ -6,7 +6,7 @@ import { formatMoney, isOverdue } from "@/lib/format";
 import { listClients, listDocuments, listInterventions } from "@/lib/queries";
 import { getStockOverview } from "@/lib/stock";
 
-export const metadata = { title: "Tableau de bord" };
+export const metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
   const { user, org } = await requireSession();
@@ -27,45 +27,45 @@ export default async function DashboardPage() {
   const upcoming = interventions.filter((i) => i.status === "planifiee" || i.status === "en_cours").slice(0, 5);
 
   const stats = [
-    { label: "Encaissé", value: sum(paid), hint: `${paid.length} facture(s) payée(s)` },
+    { label: "Collected", value: sum(paid), hint: `${paid.length} paid invoice(s)` },
     {
-      label: "À encaisser",
+      label: "To collect",
       value: sum(pending),
-      hint: overdue.length ? `dont ${overdue.length} en retard` : `${pending.length} facture(s) en attente`,
+      hint: overdue.length ? `incl. ${overdue.length} overdue` : `${pending.length} unpaid invoice(s)`,
       alert: overdue.length > 0,
     },
-    { label: "Devis en cours", value: sum(openQuotes), hint: `${openQuotes.length} devis sans réponse` },
+    { label: "Open quotes", value: sum(openQuotes), hint: `${openQuotes.length} quote(s) awaiting a reply` },
   ];
 
   const isNew = docs.length === 0 && products.length === 0 && clients.length === 0;
   const steps = [
     {
       done: !!org.address || !!org.phone,
-      title: "Complète la fiche de l'entreprise",
-      text: "Adresse, téléphone et mentions apparaissent sur chaque document.",
-      href: "/app/parametres",
-      cta: "Ouvrir les paramètres",
+      title: "Complete your company details",
+      text: "Address, phone and footer notes appear on every document.",
+      href: "/app/settings",
+      cta: "Open settings",
     },
     {
       done: products.length > 0,
-      title: "Ajoute ton matériel",
-      text: "Caméras, enregistreurs, câbles, forfaits de pose.",
-      href: "/app/stock/nouveau",
-      cta: "Ajouter un article",
+      title: "Add your equipment",
+      text: "Cameras, recorders, cables, installation packages.",
+      href: "/app/stock/new",
+      cta: "Add an item",
     },
     {
       done: clients.length > 0,
-      title: "Ajoute ton premier client",
-      text: "Tu retrouveras tout son historique sur sa fiche.",
-      href: "/app/clients/nouveau",
-      cta: "Ajouter un client",
+      title: "Add your first client",
+      text: "You will find their full history on their file.",
+      href: "/app/clients/new",
+      cta: "Add a client",
     },
     {
       done: docs.length > 0,
-      title: "Prépare ton premier devis",
-      text: "Une fois accepté, il devient une facture en un clic.",
-      href: "/app/documents/nouveau?type=devis",
-      cta: "Créer un devis",
+      title: "Prepare your first quote",
+      text: "Once accepted, it becomes an invoice in one click.",
+      href: "/app/documents/new?type=devis",
+      cta: "Create a quote",
     },
   ];
   const showSteps = steps.some((s) => !s.done);
@@ -74,15 +74,15 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm text-muted">Bonjour {user.name.split(" ")[0]}</p>
+          <p className="text-sm text-muted">Hello {user.name.split(" ")[0]}</p>
           <h1 className="page-title mt-1">{org.name}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/app/interventions/nouveau" className="btn btn-ghost">
-            Planifier une intervention
+          <Link href="/app/interventions/new" className="btn btn-ghost">
+            Schedule a job
           </Link>
-          <Link href="/app/documents/nouveau?type=devis" className="btn btn-primary">
-            Nouveau devis
+          <Link href="/app/documents/new?type=devis" className="btn btn-primary">
+            New quote
           </Link>
         </div>
       </header>
@@ -96,22 +96,22 @@ export default async function DashboardPage() {
           </div>
         ))}
         <Link
-          href="/app/stock/reappro"
+          href="/app/stock/reorder"
           className={`card p-4 transition-colors hover:bg-paper/60 sm:p-5 ${lowStock.length ? "border-clay/40" : ""}`}
         >
-          <p className="text-xs font-medium tracking-wide text-muted uppercase">À commander</p>
+          <p className="text-xs font-medium tracking-wide text-muted uppercase">To order</p>
           <p className={`mt-2 text-lg font-semibold tabular-nums sm:text-2xl ${lowStock.length ? "text-clay" : ""}`}>
-            {lowStock.length} article{lowStock.length > 1 ? "s" : ""}
+            {lowStock.length} item{lowStock.length === 1 ? "" : "s"}
           </p>
           <p className="mt-1 truncate text-xs text-muted">
-            {lowStock.length ? lowStock.slice(0, 2).map((p) => p.name).join(", ") : "Rien à commander pour le moment"}
+            {lowStock.length ? lowStock.slice(0, 2).map((p) => p.name).join(", ") : "Nothing to order right now"}
           </p>
         </Link>
       </section>
 
       {showSteps && (
         <section className="card p-6 sm:p-8">
-          <h2 className="font-display text-3xl">{isNew ? "Bienvenue ! Quatre étapes pour démarrer" : "Pour finir la mise en route"}</h2>
+          <h2 className="font-display text-3xl">{isNew ? "Welcome! Four steps to get started" : "Finish setting up"}</h2>
           <ol className="mt-5 space-y-4">
             {steps.map((step, i) => (
               <li key={step.title} className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -140,9 +140,9 @@ export default async function DashboardPage() {
       {upcoming.length > 0 && (
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-2xl">Prochaines interventions</h2>
+            <h2 className="font-display text-2xl">Upcoming jobs</h2>
             <Link href="/app/interventions" className="text-sm text-muted underline underline-offset-4 hover:text-ink">
-              Tout voir
+              View all
             </Link>
           </div>
           <InterventionList rows={upcoming} />
@@ -152,9 +152,9 @@ export default async function DashboardPage() {
       {docs.length > 0 && (
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-2xl">Derniers documents</h2>
+            <h2 className="font-display text-2xl">Latest documents</h2>
             <Link href="/app/documents" className="text-sm text-muted underline underline-offset-4 hover:text-ink">
-              Tout voir
+              View all
             </Link>
           </div>
           <DocList docs={docs.slice(0, 6)} currency={org.currency} />

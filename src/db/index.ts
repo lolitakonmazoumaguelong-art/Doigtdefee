@@ -19,7 +19,7 @@ async function init(): Promise<DB> {
   }
 
   if (process.env.VERCEL) {
-    throw new Error("DATABASE_URL manquant : ajoute l'URL Postgres dans les variables d'environnement.");
+    throw new Error("DATABASE_URL is missing: add the Postgres URL to the environment variables.");
   }
 
   // Local : Postgres embarqué dans un dossier, aucun compte requis

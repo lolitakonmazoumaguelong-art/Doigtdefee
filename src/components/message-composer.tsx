@@ -32,14 +32,14 @@ export function MessageComposer({ canPin, count }: { canPin: boolean; count: num
       }}
     >
       <label className="sr-only" htmlFor="body">
-        Ton message
+        Your message
       </label>
       <textarea
         id="body"
         name="body"
         rows={2}
         className="input"
-        placeholder="Écris à l'équipe : consigne, matériel manquant, compte rendu de chantier..."
+        placeholder="Write to the team: instructions, missing equipment, job report..."
         maxLength={2000}
         required
       />
@@ -48,13 +48,13 @@ export function MessageComposer({ canPin, count }: { canPin: boolean; count: num
         {canPin ? (
           <label className="flex cursor-pointer items-center gap-2 text-sm">
             <input type="checkbox" name="pinned" className="size-4 accent-ink" />
-            Épingler comme consigne
+            Pin as a notice
           </label>
         ) : (
           <span />
         )}
         <button className="btn btn-primary" disabled={pending}>
-          {pending ? "Envoi..." : "Envoyer"}
+          {pending ? "Sending..." : "Send"}
         </button>
       </div>
       <div ref={bottom} />

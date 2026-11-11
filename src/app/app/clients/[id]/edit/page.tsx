@@ -3,7 +3,7 @@ import { ClientForm } from "@/components/client-form";
 import { requireSession } from "@/lib/auth";
 import { getClient } from "@/lib/queries";
 
-export const metadata = { title: "Modifier le client" };
+export const metadata = { title: "Edit client" };
 
 export default async function EditClientPage({ params }: { params: Promise<{ id: string }> }) {
   const { org } = await requireSession();
@@ -12,7 +12,7 @@ export default async function EditClientPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="space-y-6">
-      <h1 className="page-title">Modifier {client.name}</h1>
+      <h1 className="page-title">Edit {client.name}</h1>
       <ClientForm
         client={{
           id: client.id,

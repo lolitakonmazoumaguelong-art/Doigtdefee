@@ -5,9 +5,9 @@ import { requireSession } from "@/lib/auth";
 import { formatMoney } from "@/lib/format";
 import { getStockOverview, listPurchaseOrders } from "@/lib/stock";
 
-export const metadata = { title: "À commander" };
+export const metadata = { title: "To order" };
 
-const dateFormat = new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeZone: "Indian/Mauritius" });
+const dateFormat = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeZone: "Indian/Mauritius" });
 
 export default async function ReorderPage() {
   const { org } = await requireSession();
@@ -25,17 +25,17 @@ export default async function ReorderPage() {
         <Link href="/app/stock" className="text-sm text-muted underline-offset-4 hover:underline">
           Stock
         </Link>
-        <h1 className="page-title mt-1">À commander</h1>
+        <h1 className="page-title mt-1">To order</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted">
-          Calculé automatiquement : stock disponible (moins ce qui est réservé à des clients), commandes déjà en route et
-          ventes des 30 derniers jours.
+          Calculated automatically from available stock (minus what is reserved for clients), orders already on the way and
+          sales over the last 30 days.
         </p>
       </header>
 
       {toOrder.length === 0 ? (
         <div className="card p-8 text-center">
-          <p className="font-display text-2xl">Rien à commander</p>
-          <p className="mt-2 text-sm text-muted">Tous les articles sont au-dessus de leur seuil d&apos;alerte.</p>
+          <p className="font-display text-2xl">Nothing to order</p>
+          <p className="mt-2 text-sm text-muted">All items are above their alert threshold.</p>
         </div>
       ) : (
         suppliers.map((supplier) => {
@@ -45,8 +45,8 @@ export default async function ReorderPage() {
             <form key={supplier || "sans"} action={createPurchaseOrder} className="card overflow-hidden">
               <input type="hidden" name="supplier" value={supplier} />
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
-                <h2 className="font-display text-2xl">{supplier || "Fournisseur non renseigné"}</h2>
-                <p className="text-sm text-muted">Estimation : {money(total)}</p>
+                <h2 className="font-display text-2xl">{supplier || "No supplier set"}</h2>
+                <p className="text-sm text-muted">Estimate: {money(total)}</p>
               </div>
               <ul className="divide-y divide-line">
                 {lines.map((p) => (
@@ -57,30 +57,30 @@ export default async function ReorderPage() {
                       </Link>
                       <p className="text-xs text-muted">
                         {[
-                          `${p.available} dispo (seuil ${p.minStock})`,
-                          p.reserved > 0 && `${p.reserved} réservé(s)`,
-                          p.onOrder > 0 && `${p.onOrder} déjà en commande`,
-                          p.sold30 > 0 && `${p.sold30} vendu(s) en 30 j`,
+                          `${p.available} available (threshold ${p.minStock})`,
+                          p.reserved > 0 && `${p.reserved} reserved`,
+                          p.onOrder > 0 && `${p.onOrder} already on order`,
+                          p.sold30 > 0 && `${p.sold30} sold in 30 days`,
                         ]
                           .filter(Boolean)
                           .join(" · ")}
                       </p>
                     </div>
                     <label className="flex items-center gap-2 text-sm text-muted">
-                      Quantité
+                      Quantity
                       <input
                         name={`qty:${p.id}`}
                         inputMode="numeric"
                         defaultValue={p.toOrder}
                         className="input w-20"
-                        aria-label={`Quantité à commander pour ${p.name}`}
+                        aria-label={`Quantity to order for ${p.name}`}
                       />
                     </label>
                   </li>
                 ))}
               </ul>
               <div className="border-t border-line px-4 py-3 sm:px-5">
-                <button className="btn btn-primary">Créer le bon de commande</button>
+                <button className="btn btn-primary">Create purchase order</button>
               </div>
             </form>
           );
@@ -89,7 +89,7 @@ export default async function ReorderPage() {
 
       {pending.length > 0 && (
         <section>
-          <h2 className="mb-3 font-display text-2xl">Commandes en attente de livraison</h2>
+          <h2 className="mb-3 font-display text-2xl">Orders awaiting delivery</h2>
           <ul className="space-y-3">
             {pending.map((order) => (
               <li key={order.id} className="card p-4 sm:p-5">
@@ -99,18 +99,18 @@ export default async function ReorderPage() {
                       {order.number}
                       {order.supplier && <span className="font-normal text-muted"> · {order.supplier}</span>}
                     </p>
-                    <p className="text-xs text-muted">Passée le {dateFormat.format(order.createdAt)}</p>
+                    <p className="text-xs text-muted">Ordered {dateFormat.format(order.createdAt)}</p>
                   </div>
                   <div className="flex gap-2">
                     <form action={cancelPurchaseOrder}>
                       <input type="hidden" name="id" value={order.id} />
-                      <ConfirmButton message={`Annuler la commande ${order.number} ?`} className="btn btn-ghost">
-                        Annuler
+                      <ConfirmButton message={`Cancel order ${order.number}?`} className="btn btn-ghost">
+                        Cancel
                       </ConfirmButton>
                     </form>
                     <form action={receivePurchaseOrder}>
                       <input type="hidden" name="id" value={order.id} />
-                      <button className="btn btn-accent">Marquer comme reçue</button>
+                      <button className="btn btn-accent">Mark as received</button>
                     </form>
                   </div>
                 </div>
@@ -132,17 +132,17 @@ export default async function ReorderPage() {
 
       {history.length > 0 && (
         <section>
-          <h2 className="mb-3 font-display text-2xl">Historique des commandes</h2>
+          <h2 className="mb-3 font-display text-2xl">Order history</h2>
           <ul className="card divide-y divide-line">
             {history.map((order) => (
               <li key={order.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm sm:px-5">
                 <span className="tabular-nums">
                   {order.number}
                   {order.supplier && <span className="text-muted"> · {order.supplier}</span>}
-                  <span className="text-muted"> · {order.items.reduce((s, i) => s + i.quantity, 0)} article(s)</span>
+                  <span className="text-muted"> · {order.items.reduce((s, i) => s + i.quantity, 0)} item(s)</span>
                 </span>
                 <Badge
-                  label={order.status === "recue" ? `Reçue le ${dateFormat.format(order.receivedAt ?? order.createdAt)}` : "Annulée"}
+                  label={order.status === "recue" ? `Received ${dateFormat.format(order.receivedAt ?? order.createdAt)}` : "Cancelled"}
                   tone={order.status === "recue" ? "good" : "neutral"}
                 />
               </li>

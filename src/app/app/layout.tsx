@@ -19,7 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <span className="font-display text-2xl leading-none">Doigt de Fée</span>
           </Link>
           <form action={logout} className="md:hidden">
-            <button className="text-sm text-paper/70 underline-offset-4 hover:underline">Déconnexion</button>
+            <button className="text-sm text-paper/70 underline-offset-4 hover:underline">Log out</button>
           </form>
         </div>
         <AppNav unread={unread} isOwner={user.role === "owner"} />
@@ -29,7 +29,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <p className="truncate text-xs text-paper/60">{user.email}</p>
           <form action={logout}>
             <button className="mt-3 cursor-pointer text-sm text-paper/70 underline-offset-4 hover:text-paper hover:underline">
-              Déconnexion
+              Log out
             </button>
           </form>
         </div>

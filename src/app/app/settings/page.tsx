@@ -3,7 +3,7 @@ import { PasswordPanel, TeamPanel } from "@/components/team-panel";
 import { requireSession } from "@/lib/auth";
 import { listMembers } from "@/lib/queries";
 
-export const metadata = { title: "Paramètres" };
+export const metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
   const { org, user } = await requireSession();
@@ -13,11 +13,11 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="page-title">Paramètres</h1>
+        <h1 className="page-title">Settings</h1>
         <p className="mt-2 text-sm text-muted">
           {isOwner
-            ? "Personnalise tes documents, gère ton équipe et ton accès."
-            : "Les réglages de l'entreprise sont gérés par le responsable du compte."}
+            ? "Customise your documents, manage your team and your login."
+            : "Company settings are managed by the account owner."}
         </p>
       </header>
       {isOwner && (

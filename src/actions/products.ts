@@ -16,16 +16,16 @@ const qty = (message: string) => z.coerce.number(message).int(message).min(0, me
 
 const productSchema = z.object({
   id: z.uuid().optional(),
-  name: z.string().trim().min(1, "Le nom de l'article est obligatoire.").max(200),
+  name: z.string().trim().min(1, "The item name is required.").max(200),
   reference: z.string().trim().max(100),
   category: z.enum(CATEGORY_IDS),
   kind: z.enum(["produit", "service"]),
-  unitPrice: price("Prix de vente invalide."),
-  costPrice: price("Prix d'achat invalide."),
-  minStock: qty("Seuil d'alerte invalide."),
-  targetStock: qty("Stock idéal invalide."),
+  unitPrice: price("Invalid selling price."),
+  costPrice: price("Invalid cost price."),
+  minStock: qty("Invalid alert threshold."),
+  targetStock: qty("Invalid ideal stock."),
   supplier: z.string().trim().max(100),
-  initialStock: qty("Stock de départ invalide."),
+  initialStock: qty("Invalid opening stock."),
 });
 
 export async function saveProduct(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -67,7 +67,7 @@ export async function saveProduct(_prev: FormState, formData: FormData): Promise
       if (stock > 0) {
         await tx
           .insert(schema.stockMovements)
-          .values({ orgId: org.id, productId: created.id, delta: stock, reason: "entree", note: "Stock de départ" });
+          .values({ orgId: org.id, productId: created.id, delta: stock, reason: "entree", note: "Opening stock" });
       }
     });
   }
@@ -79,9 +79,9 @@ const movementSchema = z.object({
   productId: z.uuid(),
   direction: z.enum(["entree", "sortie", "defaut"]),
   quantity: z.coerce
-    .number("Quantité invalide.")
-    .int("La quantité doit être un nombre entier.")
-    .positive("La quantité doit être supérieure à zéro.")
+    .number("Invalid quantity.")
+    .int("The quantity must be a whole number.")
+    .positive("The quantity must be greater than zero.")
     .max(1_000_000),
   note: z.string().trim().max(300),
 });
@@ -104,9 +104,9 @@ export async function moveStock(_prev: FormState, formData: FormData): Promise<F
         .select({ stock: schema.products.stock, kind: schema.products.kind })
         .from(schema.products)
         .where(and(eq(schema.products.id, productId), eq(schema.products.orgId, org.id)));
-      if (!product || product.kind === "service") throw new Error("Article introuvable.");
+      if (!product || product.kind === "service") throw new Error("Item not found.");
       if (direction !== "entree" && quantity > product.stock) {
-        throw new Error(`Stock insuffisant : il reste ${product.stock} unité(s).`);
+        throw new Error(`Not enough stock: only ${product.stock} unit(s) left.`);
       }
       const delta = direction === "entree" ? quantity : -quantity;
       await tx
@@ -116,7 +116,7 @@ export async function moveStock(_prev: FormState, formData: FormData): Promise<F
       await tx.insert(schema.stockMovements).values({ orgId: org.id, productId, delta, reason: direction, note });
     });
   } catch (e) {
-    return { error: e instanceof Error && e.message.endsWith(".") ? e.message : "Mouvement impossible, réessaie." };
+    return { error: e instanceof Error && e.message.endsWith(".") ? e.message : "Could not record the movement, please try again." };
   }
   revalidatePath("/app", "layout");
   return { ok: true };
@@ -135,9 +135,9 @@ export async function deleteProduct(formData: FormData) {
 export async function setCountedStock(_prev: FormState, formData: FormData): Promise<FormState> {
   const { org } = await requireSession();
   const id = z.uuid().safeParse(formData.get("productId"));
-  const counted = qty("Quantité comptée invalide.").safeParse(formData.get("counted"));
-  if (!id.success) return { error: "Article introuvable." };
-  if (!counted.success || formData.get("counted") === "") return { error: "Quantité comptée invalide." };
+  const counted = qty("Invalid counted quantity.").safeParse(formData.get("counted"));
+  if (!id.success) return { error: "Item not found." };
+  if (!counted.success || formData.get("counted") === "") return { error: "Invalid counted quantity." };
 
   const db = await getDb();
   await db.transaction(async (tx) => {
@@ -152,7 +152,7 @@ export async function setCountedStock(_prev: FormState, formData: FormData): Pro
       productId: id.data,
       delta: counted.data - product.stock,
       reason: "inventaire",
-      note: `Compté : ${counted.data} (au lieu de ${product.stock})`,
+      note: `Counted: ${counted.data} (instead of ${product.stock})`,
     });
   });
   revalidatePath("/app", "layout");

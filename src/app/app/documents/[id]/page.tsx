@@ -34,7 +34,7 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
       <header className="flex flex-wrap items-end justify-between gap-4 print:hidden">
         <div>
           <Link href="/app/documents" className="text-sm text-muted underline-offset-4 hover:underline">
-            Devis et factures
+            Quotes & invoices
           </Link>
           <div className="mt-1 flex flex-wrap items-center gap-3">
             <h1 className="page-title">
@@ -45,8 +45,8 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
         </div>
         <div className="flex flex-wrap gap-2">
           {isDocEditable(doc) && (
-            <Link href={`/app/documents/${doc.id}/modifier`} className="btn btn-ghost">
-              Modifier
+            <Link href={`/app/documents/${doc.id}/edit`} className="btn btn-ghost">
+              Edit
             </Link>
           )}
           <PrintButton />
@@ -54,31 +54,31 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
             <StatusButton
               id={doc.id}
               status="envoye"
-              label={isQuote ? "Marquer comme envoyé" : "Émettre la facture"}
+              label={isQuote ? "Mark as sent" : "Issue invoice"}
               className="btn btn-accent"
             />
           )}
           {isQuote && doc.status === "envoye" && (
             <>
-              <StatusButton id={doc.id} status="refuse" label="Refusé" className="btn btn-ghost" />
-              <StatusButton id={doc.id} status="accepte" label="Accepté" className="btn btn-accent" />
+              <StatusButton id={doc.id} status="refuse" label="Declined" className="btn btn-ghost" />
+              <StatusButton id={doc.id} status="accepte" label="Accepted" className="btn btn-accent" />
             </>
           )}
           {isQuote && (doc.status === "envoye" || doc.status === "accepte") && (
             <form action={convertToInvoice}>
               <input type="hidden" name="id" value={doc.id} />
-              <button className="btn btn-primary">Transformer en facture</button>
+              <button className="btn btn-primary">Convert to invoice</button>
             </form>
           )}
           {!isQuote && doc.status === "envoye" && (
-            <StatusButton id={doc.id} status="paye" label="Marquer comme payée" className="btn btn-accent" />
+            <StatusButton id={doc.id} status="paye" label="Mark as paid" className="btn btn-accent" />
           )}
         </div>
       </header>
 
       {!isQuote && doc.status === "brouillon" && (
         <p className="rounded-lg border border-line bg-chalk/30 px-4 py-3 text-sm print:hidden">
-          Brouillon : le matériel sortira du stock au moment où tu émets la facture.
+          Draft: equipment leaves stock when you issue the invoice.
         </p>
       )}
 
@@ -97,11 +97,11 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
         <ConfirmButton
           message={
             doc.stockApplied
-              ? `Supprimer ${doc.number} ? Le matériel facturé sera remis en stock.`
-              : `Supprimer ${doc.number} ?`
+              ? `Delete ${doc.number}? The invoiced equipment will go back into stock.`
+              : `Delete ${doc.number}?`
           }
         >
-          Supprimer ce document
+          Delete this document
         </ConfirmButton>
       </form>
     </div>

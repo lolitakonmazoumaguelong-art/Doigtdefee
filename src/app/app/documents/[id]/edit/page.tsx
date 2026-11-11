@@ -5,7 +5,7 @@ import { getStockOverview } from "@/lib/stock";
 import { isDocEditable, typeLabel } from "@/lib/format";
 import { getDocument, listClients } from "@/lib/queries";
 
-export const metadata = { title: "Modifier le document" };
+export const metadata = { title: "Edit document" };
 
 export default async function EditDocumentPage({ params }: { params: Promise<{ id: string }> }) {
   const { org } = await requireSession();

@@ -9,11 +9,11 @@ import { CURRENCY_CODES } from "@/lib/format";
 import type { FormState } from "@/lib/types";
 
 const signupSchema = z.object({
-  company: z.string().trim().min(1, "Indique le nom de l'entreprise.").max(200),
-  name: z.string().trim().min(1, "Indique ton nom.").max(100),
-  email: z.email("Adresse e-mail invalide.").max(200),
-  password: z.string().min(8, "Le mot de passe doit faire au moins 8 caractères.").max(200),
-  currency: z.enum(CURRENCY_CODES, "Choisis une devise."),
+  company: z.string().trim().min(1, "Enter the company name.").max(200),
+  name: z.string().trim().min(1, "Enter your name.").max(100),
+  email: z.email("Invalid email address.").max(200),
+  password: z.string().min(8, "The password must be at least 8 characters.").max(200),
+  currency: z.enum(CURRENCY_CODES, "Choose a currency."),
 });
 
 export async function signup(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -29,7 +29,7 @@ export async function signup(_prev: FormState, formData: FormData): Promise<Form
   const db = await getDb();
   const { company, name, email, password, currency } = parsed.data;
   const existing = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, email));
-  if (existing.length) return { error: "Un compte existe déjà avec cette adresse." };
+  if (existing.length) return { error: "An account already exists with this email." };
 
   const passwordHash = await hashPassword(password);
   const userId = await db.transaction(async (tx) => {
@@ -47,12 +47,12 @@ export async function signup(_prev: FormState, formData: FormData): Promise<Form
 export async function login(_prev: FormState, formData: FormData): Promise<FormState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  if (!email || !password) return { error: "Remplis les deux champs." };
+  if (!email || !password) return { error: "Fill in both fields." };
 
   const db = await getDb();
   const [user] = await db.select().from(schema.users).where(eq(schema.users.email, email));
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
-    return { error: "E-mail ou mot de passe incorrect." };
+    return { error: "Incorrect email or password." };
   }
   await createSession(user.id);
   redirect("/app");

@@ -3,10 +3,10 @@ import { MessageComposer } from "@/components/message-composer";
 import { requireSession } from "@/lib/auth";
 import { listMessages } from "@/lib/queries";
 
-export const metadata = { title: "Équipe" };
+export const metadata = { title: "Team" };
 
-const dayFormat = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "Indian/Mauritius" });
-const timeFormat = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mauritius" });
+const dayFormat = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Indian/Mauritius" });
+const timeFormat = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mauritius" });
 
 export default async function MessagesPage() {
   const { org, user } = await requireSession();
@@ -17,13 +17,13 @@ export default async function MessagesPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <header>
-        <h1 className="page-title">Équipe</h1>
-        <p className="mt-2 text-sm text-muted">Le fil de discussion de {org.name}. Tout le monde le voit.</p>
+        <h1 className="page-title">Team</h1>
+        <p className="mt-2 text-sm text-muted">The {org.name} team thread. Everyone can see it.</p>
       </header>
 
       {pinned.length > 0 && (
         <section className="rounded-2xl border border-ink/20 bg-chalk/40 p-4 sm:p-5">
-          <h2 className="label">Consignes épinglées</h2>
+          <h2 className="label">Pinned notices</h2>
           <ul className="space-y-3">
             {pinned.map((m) => (
               <li key={m.id} className="flex items-start justify-between gap-3">
@@ -37,7 +37,7 @@ export default async function MessagesPage() {
                   <form action={unpinMessage}>
                     <input type="hidden" name="id" value={m.id} />
                     <button className="cursor-pointer text-xs text-muted underline underline-offset-4 hover:text-ink">
-                      Désépingler
+                      Unpin
                     </button>
                   </form>
                 )}
@@ -49,9 +49,9 @@ export default async function MessagesPage() {
 
       {messages.length === 0 ? (
         <div className="card p-8 text-center">
-          <p className="font-display text-2xl">Le fil est vide</p>
+          <p className="font-display text-2xl">The thread is empty</p>
           <p className="mt-2 text-sm text-muted">
-            Lance la discussion : planning de la semaine, matériel à commander, retour de chantier.
+            Start the conversation: the weekly schedule, equipment to order, feedback from a job.
           </p>
         </div>
       ) : (
@@ -70,8 +70,8 @@ export default async function MessagesPage() {
                     }`}
                   >
                     <p className={`text-xs font-medium ${mine ? "text-paper/70" : "text-muted"}`}>
-                      {mine ? "Moi" : m.authorName} · {timeFormat.format(m.createdAt)}
-                      {m.pinned && " · Consigne"}
+                      {mine ? "Me" : m.authorName} · {timeFormat.format(m.createdAt)}
+                      {m.pinned && " · Notice"}
                     </p>
                     <p className="mt-0.5 text-sm break-words whitespace-pre-line">{m.body}</p>
                     {(mine || isOwner) && (
@@ -82,7 +82,7 @@ export default async function MessagesPage() {
                             mine ? "text-paper/60 hover:text-paper" : "text-muted hover:text-ink"
                           }`}
                         >
-                          Supprimer
+                          Delete
                         </button>
                       </form>
                     )}

@@ -4,14 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const LINKS = [
-  { href: "/app", label: "Tableau de bord" },
-  { href: "/app/documents", label: "Devis et factures" },
+  { href: "/app", label: "Dashboard" },
+  { href: "/app/documents", label: "Quotes & invoices" },
   { href: "/app/clients", label: "Clients" },
-  { href: "/app/interventions", label: "Interventions" },
-  { href: "/app/messages", label: "Équipe" },
+  { href: "/app/interventions", label: "Jobs" },
+  { href: "/app/messages", label: "Team" },
   { href: "/app/stock", label: "Stock" },
-  { href: "/app/statistiques", label: "Statistiques", ownerOnly: true },
-  { href: "/app/parametres", label: "Paramètres" },
+  { href: "/app/statistics", label: "Statistics", ownerOnly: true },
+  { href: "/app/settings", label: "Settings" },
 ];
 
 export function AppNav({ unread = 0, isOwner = false }: { unread?: number; isOwner?: boolean }) {
@@ -31,9 +31,11 @@ export function AppNav({ unread = 0, isOwner = false }: { unread?: number; isOwn
           >
             {link.label}
             {link.href === "/app/messages" && unread > 0 && !active && (
-              <span className="ml-2 inline-grid min-w-5 place-items-center rounded-full bg-clay px-1.5 text-xs font-semibold text-paper">
+              <span
+                aria-label={`${unread} unread message(s)`}
+                className="ml-2 inline-grid min-w-5 place-items-center rounded-full bg-clay px-1.5 text-xs font-semibold text-paper"
+              >
                 {unread}
-                <span className="sr-only"> message(s) non lu(s)</span>
               </span>
             )}
           </Link>

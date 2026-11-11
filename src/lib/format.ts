@@ -1,36 +1,45 @@
 import type { DocStatus, DocType } from "@/db/schema";
 
 export const CURRENCIES = [
-  { code: "MUR", label: "Roupie mauricienne (Rs)" },
+  { code: "MUR", label: "Mauritian rupee (Rs)" },
   { code: "EUR", label: "Euro (€)" },
-  { code: "XAF", label: "Franc CFA BEAC (FCFA)" },
-  { code: "XOF", label: "Franc CFA BCEAO (CFA)" },
-  { code: "USD", label: "Dollar américain ($)" },
-  { code: "CAD", label: "Dollar canadien ($ CA)" },
-  { code: "CHF", label: "Franc suisse (CHF)" },
-  { code: "MAD", label: "Dirham marocain (MAD)" },
+  { code: "XAF", label: "CFA franc BEAC (FCFA)" },
+  { code: "XOF", label: "CFA franc BCEAO (CFA)" },
+  { code: "USD", label: "US dollar ($)" },
+  { code: "CAD", label: "Canadian dollar (CA$)" },
+  { code: "CHF", label: "Swiss franc (CHF)" },
+  { code: "MAD", label: "Moroccan dirham (MAD)" },
 ] as const;
 
 export const CURRENCY_CODES = CURRENCIES.map((c) => c.code) as [string, ...string[]];
 
-/** Convertit une saisie ("12 500,50") en centimes. Renvoie NaN si invalide. */
+/** Lit un nombre saisi à l'anglaise ou à la française : "1,500.50", "1 500,50", "1,500", "12,5". NaN si invalide. */
+export function parseNumber(input: unknown) {
+  let s = String(input ?? "").replace(/[\s\u00a0\u202f]/g, "");
+  if (s.includes(",") && s.includes(".")) s = s.replace(/,/g, ""); // 1,500.50
+  else if (/^-?\d{1,3}(,\d{3})+$/.test(s)) s = s.replace(/,/g, ""); // 1,500
+  else s = s.replace(",", "."); // 12,5
+  return s === "" ? NaN : Number(s);
+}
+
+/** Convertit une saisie en centimes. Renvoie NaN si invalide. */
 export function parseAmount(input: unknown) {
-  const n = Number(String(input ?? "").replace(/\s/g, "").replace(",", "."));
+  const n = parseNumber(input);
   return Number.isFinite(n) ? Math.round(n * 100) : NaN;
 }
 
 export function formatMoney(cents: number, currency: string) {
   if (currency === "MUR") {
-    const amount = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: cents % 100 ? 2 : 0, maximumFractionDigits: 2 });
+    const amount = new Intl.NumberFormat("en-GB", { minimumFractionDigits: cents % 100 ? 2 : 0, maximumFractionDigits: 2 });
     return `Rs ${amount.format(cents / 100)}`;
   }
-  return new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(cents / 100);
+  return new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(cents / 100);
 }
 
 export function formatDate(iso: string | null | undefined) {
   if (!iso) return "";
   const [y, m, d] = iso.split("-").map(Number);
-  return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" }).format(
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(
     new Date(Date.UTC(y, m - 1, d, 12)),
   );
 }
@@ -45,7 +54,7 @@ export function addDays(iso: string, days: number) {
   return d.toISOString().slice(0, 10);
 }
 
-export const typeLabel = (type: DocType) => (type === "devis" ? "Devis" : "Facture");
+export const typeLabel = (type: DocType) => (type === "devis" ? "Quote" : "Invoice");
 
 export type Tone = "neutral" | "info" | "good" | "bad" | "warn";
 
@@ -57,18 +66,18 @@ export function statusInfo(doc: { type: DocType; status: DocStatus; dueDate: str
   label: string;
   tone: Tone;
 } {
-  if (isOverdue(doc)) return { label: "En retard", tone: "bad" };
+  if (isOverdue(doc)) return { label: "Overdue", tone: "bad" };
   switch (doc.status) {
     case "brouillon":
-      return { label: "Brouillon", tone: "neutral" };
+      return { label: "Draft", tone: "neutral" };
     case "envoye":
-      return { label: doc.type === "devis" ? "Envoyé" : "En attente", tone: "info" };
+      return { label: doc.type === "devis" ? "Sent" : "Awaiting payment", tone: "info" };
     case "accepte":
-      return { label: "Accepté", tone: "good" };
+      return { label: "Accepted", tone: "good" };
     case "refuse":
-      return { label: "Refusé", tone: "warn" };
+      return { label: "Declined", tone: "warn" };
     case "paye":
-      return { label: "Payée", tone: "good" };
+      return { label: "Paid", tone: "good" };
   }
 }
 

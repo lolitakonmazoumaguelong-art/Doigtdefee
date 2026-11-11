@@ -18,9 +18,9 @@ export default async function InterventionPage({ params }: { params: Promise<{ i
   const status = interventionStatus(intervention.status);
   const next =
     intervention.status === "planifiee"
-      ? { status: "en_cours", label: "Démarrer l'intervention" }
+      ? { status: "en_cours", label: "Start job" }
       : intervention.status === "en_cours"
-        ? { status: "terminee", label: "Marquer comme terminée" }
+        ? { status: "terminee", label: "Mark as completed" }
         : null;
 
   return (
@@ -28,7 +28,7 @@ export default async function InterventionPage({ params }: { params: Promise<{ i
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <Link href="/app/interventions" className="text-sm text-muted underline-offset-4 hover:underline">
-            Interventions
+            Jobs
           </Link>
           <h1 className="page-title mt-1">{intervention.title}</h1>
           <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">

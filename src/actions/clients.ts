@@ -10,9 +10,9 @@ import type { FormState } from "@/lib/types";
 
 const clientSchema = z.object({
   id: z.uuid().optional(),
-  name: z.string().trim().min(1, "Le nom du client est obligatoire.").max(200),
+  name: z.string().trim().min(1, "The client name is required.").max(200),
   kind: z.enum(["particulier", "entreprise"]),
-  email: z.union([z.literal(""), z.email("Adresse e-mail invalide.")]),
+  email: z.union([z.literal(""), z.email("Invalid email address.")]),
   phone: z.string().trim().max(50),
   address: z.string().trim().max(500),
   notes: z.string().trim().max(2000),
@@ -53,7 +53,7 @@ export async function saveClient(_prev: FormState, formData: FormData): Promise<
 export async function deleteClient(_prev: FormState, formData: FormData): Promise<FormState> {
   const { org } = await requireSession();
   const id = z.uuid().safeParse(formData.get("id"));
-  if (!id.success) return { error: "Client introuvable." };
+  if (!id.success) return { error: "Client not found." };
 
   const db = await getDb();
   const [{ n }] = await db
@@ -61,7 +61,7 @@ export async function deleteClient(_prev: FormState, formData: FormData): Promis
     .from(schema.documents)
     .where(and(eq(schema.documents.clientId, id.data), eq(schema.documents.orgId, org.id)));
   if (n > 0) {
-    return { error: `Ce client a ${n} devis ou facture(s). Supprime-les d'abord pour pouvoir le retirer.` };
+    return { error: `This client has ${n} quote(s) or invoice(s). Delete them first to remove the client.` };
   }
   await db.delete(schema.clients).where(and(eq(schema.clients.id, id.data), eq(schema.clients.orgId, org.id)));
   revalidatePath("/app", "layout");

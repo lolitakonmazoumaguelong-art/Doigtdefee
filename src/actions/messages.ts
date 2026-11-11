@@ -12,8 +12,8 @@ export async function postMessage(_prev: FormState, formData: FormData): Promise
   const body = z
     .string()
     .trim()
-    .min(1, "Écris un message avant d'envoyer.")
-    .max(2000, "Message trop long (2000 caractères max).")
+    .min(1, "Write a message before sending.")
+    .max(2000, "Message too long (2000 characters max).")
     .safeParse(formData.get("body"));
   if (!body.success) return { error: body.error.issues[0].message };
 

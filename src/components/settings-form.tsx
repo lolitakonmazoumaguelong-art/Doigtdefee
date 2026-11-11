@@ -38,7 +38,7 @@ function resizeLogo(file: File): Promise<string> {
     };
     image.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("Image illisible"));
+      reject(new Error("Unreadable image"));
     };
     image.src = url;
   });
@@ -58,7 +58,7 @@ export function SettingsForm({ values }: { values: Values }) {
       setLogo(await resizeLogo(file));
       setLogoError("");
     } catch {
-      setLogoError("Impossible de lire cette image. Essaie un fichier PNG ou JPG.");
+      setLogoError("Could not read this image. Try a PNG or JPG file.");
     }
   };
 
@@ -69,39 +69,39 @@ export function SettingsForm({ values }: { values: Values }) {
 
       <section className="card space-y-4 p-5 sm:p-6">
         <div>
-          <h2 className="font-display text-2xl">Identité sur les documents</h2>
-          <p className="mt-1 text-sm text-muted">Ton logo et ta couleur apparaissent sur chaque devis et facture.</p>
+          <h2 className="font-display text-2xl">Branding on documents</h2>
+          <p className="mt-1 text-sm text-muted">Your logo and colour appear on every quote and invoice.</p>
         </div>
         <div className="flex flex-wrap items-center gap-4">
           <div className="grid h-20 w-40 place-items-center rounded-lg border border-dashed border-line bg-paper/50 p-2">
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={logo} alt="Logo de l'entreprise" className="max-h-full max-w-full object-contain" />
+              <img src={logo} alt="Company logo" className="max-h-full max-w-full object-contain" />
             ) : (
-              <span className="text-xs text-muted">Pas de logo</span>
+              <span className="text-xs text-muted">No logo</span>
             )}
           </div>
           <div className="flex flex-wrap gap-2">
             <label className="btn btn-ghost">
-              {logo ? "Changer le logo" : "Ajouter un logo"}
+              {logo ? "Change logo" : "Add a logo"}
               <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={onLogo} />
             </label>
             {logo && (
               <button type="button" className="btn btn-ghost" onClick={() => setLogo("")}>
-                Retirer
+                Remove
               </button>
             )}
           </div>
         </div>
         <FormError message={logoError} />
         <fieldset>
-          <legend className="label">Couleur des documents</legend>
+          <legend className="label">Document colour</legend>
           <div className="flex flex-wrap items-center gap-2">
             {COLORS.map((color) => (
               <button
                 key={color}
                 type="button"
-                aria-label={`Couleur ${color}`}
+                aria-label={`Colour ${color}`}
                 aria-pressed={accent === color}
                 onClick={() => setAccent(color)}
                 className={`size-9 cursor-pointer rounded-full border-2 ${accent === color ? "border-ink ring-2 ring-chalk" : "border-card"}`}
@@ -109,7 +109,7 @@ export function SettingsForm({ values }: { values: Values }) {
               />
             ))}
             <label className="ml-2 flex items-center gap-2 text-sm text-muted">
-              Autre
+              Other
               <input
                 type="color"
                 value={accent}
@@ -122,29 +122,29 @@ export function SettingsForm({ values }: { values: Values }) {
       </section>
 
       <section className="card space-y-4 p-5 sm:p-6">
-        <h2 className="font-display text-2xl">Entreprise</h2>
+        <h2 className="font-display text-2xl">Company</h2>
         <div>
           <label className="label" htmlFor="name">
-            Nom de l&apos;entreprise
+            Company name
           </label>
           <input id="name" name="name" className="input" defaultValue={values.name} required />
         </div>
         <div>
           <label className="label" htmlFor="address">
-            Adresse
+            Address
           </label>
           <textarea id="address" name="address" rows={2} className="input" defaultValue={values.address} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="label" htmlFor="phone">
-              Téléphone
+              Phone
             </label>
             <input id="phone" name="phone" type="tel" className="input" defaultValue={values.phone} />
           </div>
           <div>
             <label className="label" htmlFor="email">
-              E-mail de contact
+              Contact email
             </label>
             <input id="email" name="email" type="email" className="input" defaultValue={values.email} />
           </div>
@@ -152,13 +152,13 @@ export function SettingsForm({ values }: { values: Values }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="label" htmlFor="legalId">
-              BRN (numéro d&apos;entreprise)
+              BRN (business registration no.)
             </label>
             <input id="legalId" name="legalId" className="input" defaultValue={values.legalId} />
           </div>
           <div>
             <label className="label" htmlFor="vatNumber">
-              Numéro de TVA (si assujetti)
+              VAT number (if registered)
             </label>
             <input id="vatNumber" name="vatNumber" className="input" defaultValue={values.vatNumber} />
           </div>
@@ -166,7 +166,7 @@ export function SettingsForm({ values }: { values: Values }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="label" htmlFor="currency">
-              Devise
+              Currency
             </label>
             <select id="currency" name="currency" className="input" defaultValue={values.currency}>
               {CURRENCIES.map((c) => (
@@ -178,22 +178,22 @@ export function SettingsForm({ values }: { values: Values }) {
           </div>
           <div>
             <label className="label" htmlFor="taxRate">
-              TVA par défaut (%)
+              Default VAT (%)
             </label>
             <input id="taxRate" name="taxRate" inputMode="decimal" className="input" defaultValue={String(values.taxRate)} />
-            <p className="mt-1.5 text-xs text-muted">Mets 0 si l&apos;entreprise ne facture pas la TVA.</p>
+            <p className="mt-1.5 text-xs text-muted">Enter 0 if the company does not charge VAT.</p>
           </div>
         </div>
         <div>
           <label className="label" htmlFor="footerNote">
-            Mentions en bas de document
+            Footer notes on documents
           </label>
           <textarea
             id="footerNote"
             name="footerNote"
             rows={3}
             className="input"
-            placeholder="Conditions de paiement, garantie, coordonnées bancaires, numéro Juice..."
+            placeholder="Payment terms, warranty, bank details, Juice number..."
             defaultValue={values.footerNote}
           />
         </div>
@@ -201,10 +201,10 @@ export function SettingsForm({ values }: { values: Values }) {
 
       <FormError message={state?.error} />
       <div className="flex items-center gap-3">
-        <SubmitButton pending={pending}>Enregistrer</SubmitButton>
+        <SubmitButton pending={pending}>Save</SubmitButton>
         {state?.ok && (
           <p role="status" className="text-sm text-moss">
-            Enregistré.
+            Saved.
           </p>
         )}
       </div>

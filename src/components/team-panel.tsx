@@ -21,7 +21,7 @@ function ResetPassword({ member }: { member: Member }) {
   if (!open) {
     return (
       <button type="button" className="btn btn-ghost" onClick={() => setOpen(true)}>
-        Nouveau mot de passe
+        New password
       </button>
     );
   }
@@ -29,21 +29,21 @@ function ResetPassword({ member }: { member: Member }) {
     <form action={action} className="flex w-full flex-wrap items-center gap-2">
       <input type="hidden" name="id" value={member.id} />
       <label className="sr-only" htmlFor={`pw-${member.id}`}>
-        Nouveau mot de passe pour {member.name}
+        New password for {member.name}
       </label>
       <input
         id={`pw-${member.id}`}
         name="password"
         type="text"
         className="input max-w-56"
-        placeholder="Nouveau mot de passe"
+        placeholder="New password"
         minLength={8}
         required
       />
       <button className="btn btn-primary" disabled={pending}>
-        Valider
+        Confirm
       </button>
-      <Saved show={state?.ok} text="Mot de passe changé, transmets-le lui." />
+      <Saved show={state?.ok} text="Password changed, pass it on to them." />
       <FormError message={state?.error} />
     </form>
   );
@@ -54,9 +54,9 @@ export function TeamPanel({ members }: { members: Member[] }) {
 
   return (
     <section className="card max-w-xl p-5 sm:p-6">
-      <h2 className="font-display text-2xl">Équipe</h2>
+      <h2 className="font-display text-2xl">Team</h2>
       <p className="mt-1 text-sm text-muted">
-        Crée un accès pour chaque employé. Ils voient le stock, les clients et les documents, mais pas ces réglages.
+        Create a login for each employee. They can see stock, clients and documents, but not these settings.
       </p>
 
       <ul className="mt-4 divide-y divide-line border-y border-line">
@@ -67,13 +67,13 @@ export function TeamPanel({ members }: { members: Member[] }) {
               <p className="truncate text-sm text-muted">{member.email}</p>
             </div>
             {member.role === "owner" ? (
-              <span className="text-xs text-muted">Responsable</span>
+              <span className="text-xs text-muted">Owner</span>
             ) : (
               <>
                 <ResetPassword member={member} />
                 <form action={removeMember}>
                   <input type="hidden" name="id" value={member.id} />
-                  <ConfirmButton message={`Retirer l'accès de ${member.name} ?`}>Retirer</ConfirmButton>
+                  <ConfirmButton message={`Remove ${member.name}'s access?`}>Remove</ConfirmButton>
                 </form>
               </>
             )}
@@ -82,26 +82,26 @@ export function TeamPanel({ members }: { members: Member[] }) {
       </ul>
 
       <form action={action} className="mt-5 space-y-3">
-        <p className="label">Ajouter un employé</p>
+        <p className="label">Add an employee</p>
         <div className="grid gap-3 sm:grid-cols-2">
-          <input name="name" className="input" placeholder="Nom" aria-label="Nom de l'employé" required />
-          <input name="email" type="email" className="input" placeholder="E-mail" aria-label="E-mail de l'employé" required />
+          <input name="name" className="input" placeholder="Name" aria-label="Employee name" required />
+          <input name="email" type="email" className="input" placeholder="Email" aria-label="Employee email" required />
         </div>
         <input
           name="password"
           type="text"
           className="input"
-          placeholder="Mot de passe provisoire (8 caractères min.)"
-          aria-label="Mot de passe provisoire"
+          placeholder="Temporary password (min. 8 characters)"
+          aria-label="Temporary password"
           minLength={8}
           required
         />
         <FormError message={state?.error} />
         <div className="flex items-center gap-3">
           <button className="btn btn-primary" disabled={pending}>
-            Créer l&apos;accès
+            Create login
           </button>
-          <Saved show={state?.ok} text="Accès créé." />
+          <Saved show={state?.ok} text="Access created." />
         </div>
       </form>
     </section>
@@ -113,18 +113,18 @@ export function PasswordPanel() {
 
   return (
     <section className="card max-w-xl p-5 sm:p-6">
-      <h2 className="font-display text-2xl">Mon mot de passe</h2>
+      <h2 className="font-display text-2xl">My password</h2>
       <form action={action} className="mt-4 space-y-3">
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label className="label" htmlFor="current">
-              Actuel
+              Current
             </label>
             <input id="current" name="current" type="password" className="input" autoComplete="current-password" required />
           </div>
           <div>
             <label className="label" htmlFor="next">
-              Nouveau
+              New
             </label>
             <input id="next" name="next" type="password" className="input" autoComplete="new-password" minLength={8} required />
           </div>
@@ -132,9 +132,9 @@ export function PasswordPanel() {
         <FormError message={state?.error} />
         <div className="flex items-center gap-3">
           <button className="btn btn-primary" disabled={pending}>
-            Changer le mot de passe
+            Change password
           </button>
-          <Saved show={state?.ok} text="Mot de passe changé." />
+          <Saved show={state?.ok} text="Password changed." />
         </div>
       </form>
     </section>

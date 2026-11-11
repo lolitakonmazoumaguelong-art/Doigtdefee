@@ -7,8 +7,8 @@ import { getStockOverview } from "@/lib/stock";
 export type Period = "mois" | "precedent" | "annee";
 export type Insight = { tone: "good" | "bad" | "info"; text: string };
 
-const MONTH = new Intl.DateTimeFormat("fr-FR", { month: "short", timeZone: "UTC" });
-const MONTH_LONG = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" });
+const MONTH = new Intl.DateTimeFormat("en-GB", { month: "short", timeZone: "UTC" });
+const MONTH_LONG = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
 
 function lastMonths(count: number) {
   const [y, m] = today().split("-").map(Number);
@@ -73,7 +73,7 @@ export async function getStats(orgId: string, period: Period) {
   const previous = months[10];
   const change = previous.invoiced > 0 ? ((current.invoiced - previous.invoiced) / previous.invoiced) * 100 : null;
 
-  // --- Meilleures ventes sur la période choisie
+  // --- Best sellers sur la période choisie
   const keys = period === "mois" ? [current.key] : period === "precedent" ? [previous.key] : months.map((m) => m.key);
   const sales = new Map<string, { name: string; quantity: number; revenue: number; margin: number | null }>();
   for (const line of lines) {
@@ -120,24 +120,24 @@ export async function getStats(orgId: string, period: Period) {
   if (change !== null) {
     insights.push(
       change >= 0
-        ? { tone: "good", text: `Le chiffre d'affaires facturé progresse de ${Math.round(change)} % par rapport au mois dernier.` }
-        : { tone: "bad", text: `Le chiffre d'affaires facturé recule de ${Math.round(-change)} % par rapport au mois dernier.` },
+        ? { tone: "good", text: `Invoiced revenue is up ${Math.round(change)}% compared with last month.` }
+        : { tone: "bad", text: `Invoiced revenue is down ${Math.round(-change)}% compared with last month.` },
     );
   } else if (current.invoiced > 0) {
-    insights.push({ tone: "info", text: "Premier mois avec des factures : la comparaison démarrera le mois prochain." });
+    insights.push({ tone: "info", text: "First month with invoices: the comparison starts next month." });
   }
-  if (top[0]) insights.push({ tone: "info", text: `Meilleure vente de la période : ${top[0].name}.` });
-  if (overdue.length) insights.push({ tone: "bad", text: `${overdue.length} facture(s) en retard de paiement : pense à relancer.` });
+  if (top[0]) insights.push({ tone: "info", text: `Best seller for the period: ${top[0].name}.` });
+  if (overdue.length) insights.push({ tone: "bad", text: `${overdue.length} invoice(s) overdue: remember to chase them.` });
   if (acceptance !== null && accepted + refused >= 3) {
     insights.push(
       acceptance >= 50
-        ? { tone: "good", text: `${acceptance} % des devis ayant reçu une réponse sont acceptés.` }
-        : { tone: "bad", text: `Seulement ${acceptance} % des devis sont acceptés : revois les prix ou relance plus vite.` },
+        ? { tone: "good", text: `${acceptance}% of answered quotes are accepted.` }
+        : { tone: "bad", text: `Only ${acceptance}% of quotes are accepted: review your prices or follow up sooner.` },
     );
   }
-  if (satisfaction.mauvais) insights.push({ tone: "bad", text: `${satisfaction.mauvais} intervention(s) avec un client mécontent : lis les difficultés plus bas.` });
-  if (defective[0]?.quantity >= 2) insights.push({ tone: "bad", text: `${defective[0].name} revient souvent en SAV (${defective[0].quantity}) : parles-en au fournisseur.` });
-  if (toOrder) insights.push({ tone: "info", text: `${toOrder} article(s) à commander pour ne pas tomber en rupture.` });
+  if (satisfaction.mauvais) insights.push({ tone: "bad", text: `${satisfaction.mauvais} job(s) with an unhappy client: read the issues below.` });
+  if (defective[0]?.quantity >= 2) insights.push({ tone: "bad", text: `${defective[0].name} is often returned as faulty (${defective[0].quantity}): raise it with the supplier.` });
+  if (toOrder) insights.push({ tone: "info", text: `${toOrder} item(s) to order to avoid running out.` });
 
   return {
     months,

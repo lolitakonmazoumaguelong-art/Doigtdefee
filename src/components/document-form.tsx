@@ -6,7 +6,7 @@ import { saveDocument } from "@/actions/documents";
 import { useFormAction } from "@/components/use-form-action";
 import { FormError, SubmitButton } from "@/components/ui";
 import { categoryLabel } from "@/lib/catalog";
-import { computeTotals, formatMoney } from "@/lib/format";
+import { computeTotals, formatMoney, parseNumber } from "@/lib/format";
 
 type CatalogItem = {
   id: string;
@@ -31,7 +31,7 @@ export type DocumentFormValues = {
 };
 
 const toNumber = (v: string) => {
-  const n = Number(v.replace(/\s/g, "").replace(",", "."));
+  const n = parseNumber(v);
   return Number.isFinite(n) ? n : 0;
 };
 
@@ -108,7 +108,7 @@ export function DocumentForm({
           </label>
           <select id="clientId" name="clientId" className="input" defaultValue={values.clientId} required>
             <option value="" disabled>
-              Choisir...
+              Choose...
             </option>
             {clients.map((c) => (
               <option key={c.id} value={c.id}>
@@ -125,14 +125,14 @@ export function DocumentForm({
         </div>
         <div>
           <label className="label" htmlFor="dueDate">
-            {isQuote ? "Valable jusqu'au" : "À payer avant le"}
+            {isQuote ? "Valid until" : "Due by"}
           </label>
           <input id="dueDate" name="dueDate" type="date" className="input" defaultValue={values.dueDate} />
         </div>
       </section>
 
       <section className="card p-5 sm:p-6">
-        <h2 className="font-display text-2xl">Matériel et prestations</h2>
+        <h2 className="font-display text-2xl">Equipment & services</h2>
         <div className="mt-4 space-y-4">
           {lines.map((line, index) => {
             const product = byId.get(line.productId);
@@ -143,12 +143,12 @@ export function DocumentForm({
                   <div className="space-y-2">
                     {catalog.length > 0 && (
                       <select
-                        aria-label={`Article du catalogue, ligne ${index + 1}`}
+                        aria-label={`Catalogue item, line ${index + 1}`}
                         className="input"
                         value={line.productId}
                         onChange={(e) => pickProduct(line.key, e.target.value)}
                       >
-                        <option value="">Ligne libre (hors catalogue)</option>
+                        <option value="">Free line (not in catalogue)</option>
                         {categories.map((category) => (
                           <optgroup key={category} label={categoryLabel(category)}>
                             {catalog
@@ -156,7 +156,7 @@ export function DocumentForm({
                               .map((p) => (
                                 <option key={p.id} value={p.id}>
                                   {p.name}
-                                  {p.kind === "produit" ? ` (${p.stock} dispo)` : ""}
+                                  {p.kind === "produit" ? ` (${p.stock} available)` : ""}
                                 </option>
                               ))}
                           </optgroup>
@@ -164,9 +164,9 @@ export function DocumentForm({
                       </select>
                     )}
                     <input
-                      aria-label={`Désignation, ligne ${index + 1}`}
+                      aria-label={`Description, line ${index + 1}`}
                       className="input"
-                      placeholder="Désignation"
+                      placeholder="Description"
                       value={line.description}
                       onChange={(e) => update(line.key, { description: e.target.value })}
                       required
@@ -174,7 +174,7 @@ export function DocumentForm({
                   </div>
                   <div>
                     <label className="label" htmlFor={`qty-${line.key}`}>
-                      Qté
+                      Qty
                     </label>
                     <input
                       id={`qty-${line.key}`}
@@ -187,7 +187,7 @@ export function DocumentForm({
                   </div>
                   <div>
                     <label className="label" htmlFor={`price-${line.key}`}>
-                      Prix unitaire
+                      Unit price
                     </label>
                     <input
                       id={`price-${line.key}`}
@@ -203,7 +203,7 @@ export function DocumentForm({
                     <button
                       type="button"
                       className="btn btn-ghost px-3"
-                      aria-label={`Supprimer la ligne ${index + 1}`}
+                      aria-label={`Remove line ${index + 1}`}
                       disabled={lines.length === 1}
                       onClick={() => setLines((prev) => prev.filter((l) => l.key !== line.key))}
                     >
@@ -213,7 +213,7 @@ export function DocumentForm({
                 </div>
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm">
                   <span className={short ? "text-clay" : "text-muted"}>
-                    {short ? `Attention : seulement ${product.stock} disponible(s), le reste sera à commander.` : ""}
+                    {short ? `Warning: only ${product.stock} available, the rest will need to be ordered.` : ""}
                   </span>
                   <span className="font-medium tabular-nums">
                     {formatMoney(Math.round(toNumber(line.quantity) * toNumber(line.unitPrice) * 100), currency)}
@@ -224,18 +224,18 @@ export function DocumentForm({
           })}
         </div>
         <button type="button" className="btn btn-ghost mt-4" onClick={addLine}>
-          + Ajouter une ligne
+          + Add a line
         </button>
 
         <div className="mt-6 flex justify-end border-t border-line pt-5">
           <dl className="w-full max-w-xs space-y-2 text-sm">
             <div className="flex justify-between">
-              <dt className="text-muted">Total HT</dt>
+              <dt className="text-muted">Subtotal (excl. VAT)</dt>
               <dd className="tabular-nums">{formatMoney(totals.subtotal, currency)}</dd>
             </div>
             <div className="flex items-center justify-between gap-3">
               <dt className="flex items-center gap-2 text-muted">
-                <label htmlFor="taxRate">TVA (%)</label>
+                <label htmlFor="taxRate">VAT (%)</label>
                 <input
                   id="taxRate"
                   name="taxRate"
@@ -248,7 +248,7 @@ export function DocumentForm({
               <dd className="tabular-nums">{formatMoney(totals.tax, currency)}</dd>
             </div>
             <div className="flex justify-between border-t border-line pt-2 text-base font-semibold">
-              <dt>Total TTC</dt>
+              <dt>Total (incl. VAT)</dt>
               <dd className="tabular-nums">{formatMoney(totals.total, currency)}</dd>
             </div>
           </dl>
@@ -257,23 +257,23 @@ export function DocumentForm({
 
       <section className="card p-5 sm:p-6">
         <label className="label" htmlFor="notes">
-          Note pour le client
+          Note for the client
         </label>
         <textarea
           id="notes"
           name="notes"
           rows={3}
           className="input"
-          placeholder={isQuote ? "Délai de pose, garantie, acompte demandé..." : "Modalités de paiement, remerciements..."}
+          placeholder={isQuote ? "Installation lead time, warranty, deposit required..." : "Payment terms, thank-you note..."}
           defaultValue={values.notes}
         />
       </section>
 
       <FormError message={state?.error} />
       <div className="flex gap-2">
-        <SubmitButton pending={pending}>{values.id ? "Enregistrer" : isQuote ? "Créer le devis" : "Créer la facture"}</SubmitButton>
+        <SubmitButton pending={pending}>{values.id ? "Save" : isQuote ? "Create quote" : "Create invoice"}</SubmitButton>
         <Link href={values.id ? `/app/documents/${values.id}` : "/app/documents"} className="btn btn-ghost">
-          Annuler
+          Cancel
         </Link>
       </div>
     </form>

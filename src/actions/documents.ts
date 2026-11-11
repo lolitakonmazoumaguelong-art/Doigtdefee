@@ -7,27 +7,27 @@ import { z } from "zod";
 import { getDb, schema, type DB } from "@/db";
 import type { DocStatus, DocType } from "@/db/schema";
 import { requireSession } from "@/lib/auth";
-import { addDays, computeTotals, isDocEditable, today } from "@/lib/format";
+import { addDays, computeTotals, isDocEditable, parseNumber, today } from "@/lib/format";
 import type { FormState } from "@/lib/types";
 
 type Tx = Parameters<Parameters<DB["transaction"]>[0]>[0];
 
 const itemSchema = z.object({
   productId: z.union([z.uuid(), z.literal(""), z.null()]).optional(),
-  description: z.string().trim().min(1, "Chaque ligne doit avoir une désignation.").max(500),
-  quantity: z.coerce.number("Quantité invalide.").positive("La quantité doit être positive.").max(1_000_000),
-  unitPrice: z.coerce.number("Prix invalide.").min(0, "Le prix ne peut pas être négatif.").max(10_000_000),
+  description: z.string().trim().min(1, "Each line needs a description.").max(500),
+  quantity: z.coerce.number("Invalid quantity.").positive("The quantity must be positive.").max(1_000_000),
+  unitPrice: z.coerce.number("Invalid price.").min(0, "The price cannot be negative.").max(10_000_000),
 });
 
 const docSchema = z.object({
   id: z.uuid().optional(),
   type: z.enum(["devis", "facture"]),
-  clientId: z.uuid("Choisis un client."),
-  issueDate: z.iso.date("Date d'émission invalide."),
-  dueDate: z.union([z.literal(""), z.iso.date("Date d'échéance invalide.")]),
-  taxRate: z.coerce.number("Taux de TVA invalide.").min(0).max(100),
+  clientId: z.uuid("Choose a client."),
+  issueDate: z.iso.date("Invalid issue date."),
+  dueDate: z.union([z.literal(""), z.iso.date("Invalid due date.")]),
+  taxRate: z.coerce.number("Invalid VAT rate.").min(0).max(100),
   notes: z.string().trim().max(2000),
-  items: z.array(itemSchema).min(1, "Ajoute au moins une ligne.").max(100),
+  items: z.array(itemSchema).min(1, "Add at least one line.").max(100),
 });
 
 async function nextNumber(tx: Tx, orgId: string, type: DocType, year: number) {
@@ -36,7 +36,7 @@ async function nextNumber(tx: Tx, orgId: string, type: DocType, year: number) {
     .from(schema.documents)
     .where(and(eq(schema.documents.orgId, orgId), eq(schema.documents.type, type), eq(schema.documents.year, year)));
   const seq = (row?.last ?? 0) + 1;
-  const prefix = type === "devis" ? "D" : "F";
+  const prefix = type === "devis" ? "Q" : "INV";
   return { seq, number: `${prefix}-${year}-${String(seq).padStart(3, "0")}` };
 }
 
@@ -65,7 +65,7 @@ async function applyStock(tx: Tx, orgId: string, doc: { id: string; number: stri
       productId: line.productId!,
       delta,
       reason: direction === -1 ? "facture" : "annulation",
-      note: `Facture ${doc.number}`,
+      note: `Invoice ${doc.number}`,
     });
   }
 }
@@ -77,7 +77,7 @@ export async function saveDocument(_prev: FormState, formData: FormData): Promis
   try {
     rawItems = JSON.parse(String(formData.get("items") ?? "[]"));
   } catch {
-    return { error: "Lignes invalides." };
+    return { error: "Invalid lines." };
   }
   const parsed = docSchema.safeParse({
     id: formData.get("id") || undefined,
@@ -85,7 +85,7 @@ export async function saveDocument(_prev: FormState, formData: FormData): Promis
     clientId: formData.get("clientId"),
     issueDate: formData.get("issueDate"),
     dueDate: formData.get("dueDate") ?? "",
-    taxRate: String(formData.get("taxRate") ?? "0").replace(",", "."),
+    taxRate: parseNumber(formData.get("taxRate") ?? "0"),
     notes: formData.get("notes") ?? "",
     items: rawItems,
   });
@@ -98,7 +98,7 @@ export async function saveDocument(_prev: FormState, formData: FormData): Promis
     .select({ id: schema.clients.id })
     .from(schema.clients)
     .where(and(eq(schema.clients.id, data.clientId), eq(schema.clients.orgId, org.id)));
-  if (!client) return { error: "Client introuvable." };
+  if (!client) return { error: "Client not found." };
 
   // On ne garde que les articles qui appartiennent bien à cette entreprise
   const wantedIds = [...new Set(items.map((i) => i.productId).filter((v): v is string => !!v))];
@@ -118,7 +118,7 @@ export async function saveDocument(_prev: FormState, formData: FormData): Promis
     unitPrice: Math.round(item.unitPrice * 100),
   }));
   const { subtotal, total } = computeTotals(rows, data.taxRate);
-  if (total > 2_000_000_000) return { error: "Montant total trop élevé." };
+  if (total > 2_000_000_000) return { error: "Total amount too high." };
 
   const values = {
     clientId: data.clientId,
@@ -138,8 +138,8 @@ export async function saveDocument(_prev: FormState, formData: FormData): Promis
           .select({ status: schema.documents.status, type: schema.documents.type })
           .from(schema.documents)
           .where(and(eq(schema.documents.id, id), eq(schema.documents.orgId, org.id)));
-        if (!existing) throw new Error("Document introuvable.");
-        if (!isDocEditable(existing)) throw new Error("Ce document est verrouillé et ne peut plus être modifié.");
+        if (!existing) throw new Error("Document not found.");
+        if (!isDocEditable(existing)) throw new Error("This document is locked and can no longer be edited.");
         await tx.update(schema.documents).set(values).where(eq(schema.documents.id, id));
         await tx.delete(schema.lineItems).where(eq(schema.lineItems.documentId, id));
       } else {
@@ -154,7 +154,7 @@ export async function saveDocument(_prev: FormState, formData: FormData): Promis
       await tx.insert(schema.lineItems).values(rows.map((r) => ({ ...r, documentId: docId! })));
     });
   } catch (e) {
-    return { error: e instanceof Error && e.message.endsWith(".") ? e.message : "Enregistrement impossible, réessaie." };
+    return { error: e instanceof Error && e.message.endsWith(".") ? e.message : "Could not save, please try again." };
   }
 
   revalidatePath("/app", "layout");

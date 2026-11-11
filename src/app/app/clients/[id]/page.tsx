@@ -6,7 +6,7 @@ import { requireSession } from "@/lib/auth";
 import { formatMoney } from "@/lib/format";
 import { getClient, listDocuments, listInterventions } from "@/lib/queries";
 
-export const metadata = { title: "Fiche client" };
+export const metadata = { title: "Client file" };
 
 export default async function ClientPage({ params }: { params: Promise<{ id: string }> }) {
   const { org } = await requireSession();
@@ -29,24 +29,24 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
             Clients
           </Link>
           <h1 className="page-title mt-1">{client.name}</h1>
-          <p className="mt-2 text-sm text-muted">{client.kind === "entreprise" ? "Entreprise" : "Particulier"}</p>
+          <p className="mt-2 text-sm text-muted">{client.kind === "entreprise" ? "Company" : "Individual"}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href={`/app/clients/${client.id}/modifier`} className="btn btn-ghost">
-            Modifier
+          <Link href={`/app/clients/${client.id}/edit`} className="btn btn-ghost">
+            Edit
           </Link>
-          <Link href={`/app/interventions/nouveau?client=${client.id}`} className="btn btn-ghost">
-            Planifier une intervention
+          <Link href={`/app/interventions/new?client=${client.id}`} className="btn btn-ghost">
+            Schedule a job
           </Link>
-          <Link href={`/app/documents/nouveau?type=devis&client=${client.id}`} className="btn btn-primary">
-            Nouveau devis
+          <Link href={`/app/documents/new?type=devis&client=${client.id}`} className="btn btn-primary">
+            New quote
           </Link>
         </div>
       </header>
 
       <section className="grid gap-3 md:grid-cols-3">
         <div className="card space-y-1 p-5 text-sm md:col-span-1">
-          <p className="label">Coordonnées</p>
+          <p className="label">Contact details</p>
           {client.phone && (
             <p>
               <a href={`tel:${client.phone}`} className="underline underline-offset-4">
@@ -62,14 +62,14 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
             </p>
           )}
           {client.address && <p className="whitespace-pre-line text-muted">{client.address}</p>}
-          {!client.phone && !client.email && !client.address && <p className="text-muted">Rien de renseigné.</p>}
+          {!client.phone && !client.email && !client.address && <p className="text-muted">Nothing filled in.</p>}
         </div>
         <div className="card p-5">
-          <p className="label">Total facturé</p>
+          <p className="label">Total invoiced</p>
           <p className="text-2xl font-semibold tabular-nums">{formatMoney(billed, org.currency)}</p>
         </div>
         <div className="card p-5">
-          <p className="label">Reste à encaisser</p>
+          <p className="label">Outstanding</p>
           <p className={`text-2xl font-semibold tabular-nums ${due > 0 ? "text-clay" : ""}`}>
             {formatMoney(due, org.currency)}
           </p>
@@ -78,26 +78,26 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
 
       {client.notes && (
         <section className="card p-5">
-          <p className="label">Notes internes</p>
+          <p className="label">Internal notes</p>
           <p className="text-sm whitespace-pre-line">{client.notes}</p>
         </section>
       )}
 
       <section>
-        <h2 className="mb-3 font-display text-2xl">Interventions</h2>
+        <h2 className="mb-3 font-display text-2xl">Jobs</h2>
         {interventions.length ? (
           <InterventionList rows={interventions} showClient={false} />
         ) : (
-          <p className="card p-5 text-sm text-muted">Aucune intervention pour ce client.</p>
+          <p className="card p-5 text-sm text-muted">No jobs for this client.</p>
         )}
       </section>
 
       <section>
-        <h2 className="mb-3 font-display text-2xl">Devis et factures</h2>
+        <h2 className="mb-3 font-display text-2xl">Quotes & invoices</h2>
         {docs.length ? (
           <DocList docs={docs} currency={org.currency} />
         ) : (
-          <p className="card p-5 text-sm text-muted">Aucun document pour ce client.</p>
+          <p className="card p-5 text-sm text-muted">No documents for this client.</p>
         )}
       </section>
     </div>

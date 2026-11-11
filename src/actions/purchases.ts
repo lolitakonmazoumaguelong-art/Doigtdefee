@@ -33,7 +33,7 @@ export async function createPurchaseOrder(formData: FormData) {
     const year = new Date().getFullYear();
     const [order] = await tx
       .insert(schema.purchaseOrders)
-      .values({ orgId: org.id, supplier, number: `BC-${year}-${String(n + 1).padStart(3, "0")}` })
+      .values({ orgId: org.id, supplier, number: `PO-${year}-${String(n + 1).padStart(3, "0")}` })
       .returning({ id: schema.purchaseOrders.id });
     await tx.insert(schema.purchaseItems).values(
       products.map((p) => ({ orderId: order.id, productId: p.id, name: p.name, quantity: wanted.get(p.id)!, costPrice: p.costPrice })),

@@ -16,20 +16,20 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         <>
           <div>
             <label className="label" htmlFor="company">
-              Nom de l&apos;entreprise
+              Company name
             </label>
             <input id="company" name="company" className="input" autoComplete="organization" required />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="label" htmlFor="name">
-                Ton nom
+                Your name
               </label>
               <input id="name" name="name" className="input" autoComplete="name" required />
             </div>
             <div>
               <label className="label" htmlFor="currency">
-                Devise
+                Currency
               </label>
               <select id="currency" name="currency" className="input" defaultValue="MUR">
                 {CURRENCIES.map((c) => (
@@ -44,13 +44,13 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       )}
       <div>
         <label className="label" htmlFor="email">
-          E-mail
+          Email
         </label>
         <input id="email" name="email" type="email" className="input" autoComplete="email" required />
       </div>
       <div>
         <label className="label" htmlFor="password">
-          Mot de passe
+          Password
         </label>
         <input
           id="password"
@@ -61,21 +61,21 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           autoComplete={isSignup ? "new-password" : "current-password"}
           required
         />
-        {isSignup && <p className="mt-1.5 text-xs text-muted">8 caractères minimum.</p>}
+        {isSignup && <p className="mt-1.5 text-xs text-muted">At least 8 characters.</p>}
       </div>
       <FormError message={state?.error} />
       <SubmitButton pending={pending} className="btn btn-primary w-full py-2.5">
-        {isSignup ? "Créer mon compte" : "Me connecter"}
+        {isSignup ? "Create my account" : "Log in"}
       </SubmitButton>
       {!isSignup && (
         <p className="text-center text-xs text-muted">
-          Mot de passe oublié ? Le responsable de ton entreprise peut t&apos;en redonner un depuis ses paramètres.
+          Forgot your password? Your company owner can set a new one for you from their settings.
         </p>
       )}
       <p className="text-center text-sm text-muted">
-        {isSignup ? "Déjà un compte ? " : "Pas encore de compte ? "}
-        <Link href={isSignup ? "/connexion" : "/inscription"} className="font-medium text-ink underline underline-offset-4">
-          {isSignup ? "Connexion" : "Inscription gratuite"}
+        {isSignup ? "Already have an account? " : "No account yet? "}
+        <Link href={isSignup ? "/login" : "/signup"} className="font-medium text-ink underline underline-offset-4">
+          {isSignup ? "Log in" : "Sign up free"}
         </Link>
       </p>
     </form>

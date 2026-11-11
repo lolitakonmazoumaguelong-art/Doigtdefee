@@ -7,7 +7,7 @@ import { getDb, schema } from "@/db";
 import { hashPassword, requireSession, verifyPassword } from "@/lib/auth";
 import type { FormState } from "@/lib/types";
 
-const password = z.string().min(8, "Le mot de passe doit faire au moins 8 caractères.").max(200);
+const password = z.string().min(8, "The password must be at least 8 characters.").max(200);
 
 async function requireOwner() {
   const session = await requireSession();
@@ -15,14 +15,14 @@ async function requireOwner() {
 }
 
 const memberSchema = z.object({
-  name: z.string().trim().min(1, "Indique le nom de l'employé.").max(100),
-  email: z.email("Adresse e-mail invalide.").max(200),
+  name: z.string().trim().min(1, "Enter the employee's name.").max(100),
+  email: z.email("Invalid email address.").max(200),
   password,
 });
 
 export async function addMember(_prev: FormState, formData: FormData): Promise<FormState> {
   const session = await requireOwner();
-  if (!session) return { error: "Seul le responsable du compte peut gérer l'équipe." };
+  if (!session) return { error: "Only the account owner can manage the team." };
   const parsed = memberSchema.safeParse({
     name: formData.get("name"),
     email: String(formData.get("email") ?? "").trim().toLowerCase(),
@@ -35,7 +35,7 @@ export async function addMember(_prev: FormState, formData: FormData): Promise<F
     .select({ id: schema.users.id })
     .from(schema.users)
     .where(eq(schema.users.email, parsed.data.email));
-  if (existing.length) return { error: "Un compte existe déjà avec cette adresse." };
+  if (existing.length) return { error: "An account already exists with this email." };
 
   await db.insert(schema.users).values({
     orgId: session.org.id,
@@ -44,17 +44,17 @@ export async function addMember(_prev: FormState, formData: FormData): Promise<F
     passwordHash: await hashPassword(parsed.data.password),
     role: "member",
   });
-  revalidatePath("/app/parametres");
+  revalidatePath("/app/settings");
   return { ok: true };
 }
 
 /** Le responsable redonne un mot de passe à un employé qui l'a oublié. */
 export async function resetMemberPassword(_prev: FormState, formData: FormData): Promise<FormState> {
   const session = await requireOwner();
-  if (!session) return { error: "Seul le responsable du compte peut gérer l'équipe." };
+  if (!session) return { error: "Only the account owner can manage the team." };
   const id = z.uuid().safeParse(formData.get("id"));
   const parsed = password.safeParse(formData.get("password"));
-  if (!id.success) return { error: "Employé introuvable." };
+  if (!id.success) return { error: "Employee not found." };
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const db = await getDb();
@@ -62,7 +62,7 @@ export async function resetMemberPassword(_prev: FormState, formData: FormData):
     .select({ id: schema.users.id })
     .from(schema.users)
     .where(and(eq(schema.users.id, id.data), eq(schema.users.orgId, session.org.id), eq(schema.users.role, "member")));
-  if (!member) return { error: "Employé introuvable." };
+  if (!member) return { error: "Employee not found." };
 
   await db.update(schema.users).set({ passwordHash: await hashPassword(parsed.data) }).where(eq(schema.users.id, member.id));
   // On le déconnecte partout : il se reconnecte avec le nouveau mot de passe
@@ -78,7 +78,7 @@ export async function removeMember(formData: FormData) {
   await db
     .delete(schema.users)
     .where(and(eq(schema.users.id, id), eq(schema.users.orgId, session.org.id), eq(schema.users.role, "member")));
-  revalidatePath("/app/parametres");
+  revalidatePath("/app/settings");
 }
 
 export async function changePassword(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -86,7 +86,7 @@ export async function changePassword(_prev: FormState, formData: FormData): Prom
   const parsed = password.safeParse(formData.get("next"));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   if (!(await verifyPassword(String(formData.get("current") ?? ""), user.passwordHash))) {
-    return { error: "Le mot de passe actuel est incorrect." };
+    return { error: "The current password is incorrect." };
   }
   const db = await getDb();
   await db.update(schema.users).set({ passwordHash: await hashPassword(parsed.data) }).where(eq(schema.users.id, user.id));

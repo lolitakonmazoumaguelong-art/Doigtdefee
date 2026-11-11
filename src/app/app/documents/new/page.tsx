@@ -5,7 +5,7 @@ import { getStockOverview } from "@/lib/stock";
 import { addDays, today } from "@/lib/format";
 import { listClients } from "@/lib/queries";
 
-export const metadata = { title: "Nouveau document" };
+export const metadata = { title: "New document" };
 
 export default async function NewDocumentPage({
   searchParams,
@@ -20,12 +20,12 @@ export default async function NewDocumentPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="page-title">{type === "devis" ? "Nouveau devis" : "Nouvelle facture"}</h1>
+      <h1 className="page-title">{type === "devis" ? "New quote" : "New invoice"}</h1>
       {clients.length === 0 ? (
         <div className="card max-w-xl p-6">
-          <p className="text-sm">Il faut d&apos;abord un client pour créer un document.</p>
-          <Link href="/app/clients/nouveau" className="btn btn-primary mt-4">
-            Ajouter un client
+          <p className="text-sm">You need a client before creating a document.</p>
+          <Link href="/app/clients/new" className="btn btn-primary mt-4">
+            Add a client
           </Link>
         </div>
       ) : (

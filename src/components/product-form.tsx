@@ -38,11 +38,11 @@ export function ProductForm({
       {product && <input type="hidden" name="id" value={product.id} />}
 
       <fieldset>
-        <legend className="label">Type d&apos;article</legend>
+        <legend className="label">Item type</legend>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { id: "produit", title: "Matériel", text: "Géré en stock" },
-            { id: "service", title: "Prestation", text: "Pose, forfait, déplacement" },
+            { id: "produit", title: "Equipment", text: "Tracked in stock" },
+            { id: "service", title: "Service", text: "Installation, package, call-out" },
           ].map((option) => (
             <label
               key={option.id}
@@ -67,13 +67,13 @@ export function ProductForm({
 
       <div>
         <label className="label" htmlFor="name">
-          Désignation
+          Description
         </label>
         <input
           id="name"
           name="name"
           className="input"
-          placeholder={isService ? "Pose d'une caméra extérieure" : "Caméra IP dôme 4 MP"}
+          placeholder={isService ? "Outdoor camera installation" : "4 MP IP dome camera"}
           defaultValue={product?.name}
           required
         />
@@ -81,7 +81,7 @@ export function ProductForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="label" htmlFor="category">
-            Catégorie
+            Category
           </label>
           <select
             id="category"
@@ -99,7 +99,7 @@ export function ProductForm({
         </div>
         <div>
           <label className="label" htmlFor="reference">
-            Référence
+            Reference
           </label>
           <input id="reference" name="reference" className="input" defaultValue={product?.reference} />
         </div>
@@ -107,7 +107,7 @@ export function ProductForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="label" htmlFor="unitPrice">
-            Prix de vente ({currency})
+            Selling price ({currency})
           </label>
           <input
             id="unitPrice"
@@ -120,7 +120,7 @@ export function ProductForm({
         </div>
         <div>
           <label className="label" htmlFor="costPrice">
-            Prix d&apos;achat ({currency})
+            Cost price ({currency})
           </label>
           <input
             id="costPrice"
@@ -136,14 +136,14 @@ export function ProductForm({
           {!product && (
             <div>
               <label className="label" htmlFor="initialStock">
-                Quantité en stock
+                Quantity in stock
               </label>
               <input id="initialStock" name="initialStock" inputMode="numeric" className="input" defaultValue="0" />
             </div>
           )}
           <div>
             <label className="label" htmlFor="minStock">
-              Seuil d&apos;alerte
+              Alert threshold
             </label>
             <input
               id="minStock"
@@ -152,11 +152,11 @@ export function ProductForm({
               className="input"
               defaultValue={product?.minStock ?? 2}
             />
-            <p className="mt-1.5 text-xs text-muted">Alerte dès que le stock atteint ce niveau.</p>
+            <p className="mt-1.5 text-xs text-muted">Alert as soon as stock reaches this level.</p>
           </div>
           <div>
             <label className="label" htmlFor="targetStock">
-              Stock idéal
+              Ideal stock
             </label>
             <input
               id="targetStock"
@@ -165,11 +165,11 @@ export function ProductForm({
               className="input"
               defaultValue={product?.targetStock ?? 0}
             />
-            <p className="mt-1.5 text-xs text-muted">Niveau à retrouver après commande. 0 = calcul automatique.</p>
+            <p className="mt-1.5 text-xs text-muted">Level to return to after ordering. 0 = calculated automatically.</p>
           </div>
           <div>
             <label className="label" htmlFor="supplier">
-              Fournisseur
+              Supplier
             </label>
             <input
               id="supplier"
@@ -188,9 +188,9 @@ export function ProductForm({
       )}
       <FormError message={state?.error} />
       <div className="flex gap-2">
-        <SubmitButton pending={pending}>{product ? "Enregistrer" : "Ajouter l'article"}</SubmitButton>
+        <SubmitButton pending={pending}>{product ? "Save" : "Add item"}</SubmitButton>
         <Link href={product ? `/app/stock/${product.id}` : "/app/stock"} className="btn btn-ghost">
-          Annuler
+          Cancel
         </Link>
       </div>
     </form>

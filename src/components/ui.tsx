@@ -18,7 +18,7 @@ export function Logo({ href = "/" }: { href?: string }) {
 export function SubmitButton({
   children,
   className = "btn btn-primary",
-  pendingLabel = "Un instant...",
+  pendingLabel = "One moment...",
   pending: pendingProp,
 }: {
   children: React.ReactNode;
@@ -60,7 +60,7 @@ export function Badge({ label, tone }: { label: string; tone: Tone }) {
   );
 }
 
-export function PrintButton({ label = "Imprimer / PDF" }: { label?: string }) {
+export function PrintButton({ label = "Print / PDF" }: { label?: string }) {
   return (
     <button type="button" className="btn btn-ghost" onClick={() => window.print()}>
       {label}

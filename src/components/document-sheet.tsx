@@ -21,18 +21,18 @@ export function DocumentSheet({ org, doc, client, items }: { org: Org; doc: Doc;
             <p className={org.logo ? "text-base font-semibold" : "font-display text-3xl leading-none"}>{org.name}</p>
             {org.address && <p className="mt-2 whitespace-pre-line text-muted">{org.address}</p>}
             <p className="text-muted">{[org.phone, org.email].filter(Boolean).join(" · ")}</p>
-            {org.legalId && <p className="text-muted">BRN : {org.legalId}</p>}
-            {org.vatNumber && <p className="text-muted">TVA : {org.vatNumber}</p>}
+            {org.legalId && <p className="text-muted">BRN: {org.legalId}</p>}
+            {org.vatNumber && <p className="text-muted">VAT: {org.vatNumber}</p>}
           </div>
           <div className="text-right text-sm">
             <p className="font-display text-4xl leading-none" style={{ color: accent }}>
               {typeLabel(doc.type)}
             </p>
             <p className="mt-3 font-medium tabular-nums">{doc.number}</p>
-            <p className="text-muted">Du {formatDate(doc.issueDate)}</p>
+            <p className="text-muted">Date: {formatDate(doc.issueDate)}</p>
             {doc.dueDate && (
               <p className="text-muted">
-                {isQuote ? "Valable jusqu'au" : "À payer avant le"} {formatDate(doc.dueDate)}
+                {isQuote ? "Valid until" : "Due by"} {formatDate(doc.dueDate)}
               </p>
             )}
           </div>
@@ -48,9 +48,9 @@ export function DocumentSheet({ org, doc, client, items }: { org: Org; doc: Doc;
         <table className="mt-8 w-full text-sm">
           <thead>
             <tr className="border-b-2 text-left text-xs tracking-wide text-muted uppercase" style={{ borderColor: accent }}>
-              <th className="py-2 pr-3 font-medium">Désignation</th>
-              <th className="hidden px-3 py-2 text-right font-medium sm:table-cell print:table-cell">Qté</th>
-              <th className="hidden px-3 py-2 text-right font-medium sm:table-cell print:table-cell">Prix unitaire</th>
+              <th className="py-2 pr-3 font-medium">Description</th>
+              <th className="hidden px-3 py-2 text-right font-medium sm:table-cell print:table-cell">Qty</th>
+              <th className="hidden px-3 py-2 text-right font-medium sm:table-cell print:table-cell">Unit price</th>
               <th className="py-2 pl-3 text-right font-medium">Total</th>
             </tr>
           </thead>
@@ -78,17 +78,17 @@ export function DocumentSheet({ org, doc, client, items }: { org: Org; doc: Doc;
         <div className="mt-6 flex justify-end">
           <dl className="w-full max-w-xs space-y-1.5 text-sm">
             <div className="flex justify-between">
-              <dt className="text-muted">Total HT</dt>
+              <dt className="text-muted">Subtotal (excl. VAT)</dt>
               <dd className="tabular-nums">{money(totals.subtotal)}</dd>
             </div>
             {doc.taxRate > 0 && (
               <div className="flex justify-between">
-                <dt className="text-muted">TVA ({doc.taxRate} %)</dt>
+                <dt className="text-muted">VAT ({doc.taxRate}%)</dt>
                 <dd className="tabular-nums">{money(totals.tax)}</dd>
               </div>
             )}
             <div className="flex justify-between border-t-2 pt-2 text-base font-semibold" style={{ borderColor: accent }}>
-              <dt>{doc.taxRate > 0 ? "Total TTC" : "Total"}</dt>
+              <dt>{doc.taxRate > 0 ? "Total (incl. VAT)" : "Total"}</dt>
               <dd className="tabular-nums">{money(totals.total)}</dd>
             </div>
           </dl>

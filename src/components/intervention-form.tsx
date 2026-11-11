@@ -36,13 +36,13 @@ export function InterventionForm({
         {values.id && <input type="hidden" name="id" value={values.id} />}
         <div>
           <label className="label" htmlFor="title">
-            Intitulé
+            Title
           </label>
           <input
             id="title"
             name="title"
             className="input"
-            placeholder="Pose de 4 caméras + enregistreur"
+            placeholder="Install 4 cameras + recorder"
             defaultValue={values.title}
             required
           />
@@ -54,7 +54,7 @@ export function InterventionForm({
             </label>
             <select id="clientId" name="clientId" className="input" defaultValue={values.clientId} required>
               <option value="" disabled>
-                Choisir...
+                Choose...
               </option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -92,7 +92,7 @@ export function InterventionForm({
           </div>
           <div>
             <label className="label" htmlFor="scheduledTime">
-              Heure
+              Time
             </label>
             <input
               id="scheduledTime"
@@ -106,13 +106,13 @@ export function InterventionForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="label" htmlFor="technician">
-              Technicien
+              Technician
             </label>
             <input id="technician" name="technician" className="input" defaultValue={values.technician} />
           </div>
           <div>
             <label className="label" htmlFor="status">
-              Statut
+              Status
             </label>
             <select id="status" name="status" className="input" defaultValue={values.status}>
               {INTERVENTION_STATUSES.map((s) => (
@@ -125,14 +125,14 @@ export function InterventionForm({
         </div>
         <div>
           <label className="label" htmlFor="address">
-            Adresse d&apos;intervention
+            Job address
           </label>
           <textarea
             id="address"
             name="address"
             rows={2}
             className="input"
-            placeholder="Laisse vide pour utiliser l'adresse du client"
+            placeholder="Leave empty to use the client's address"
             defaultValue={values.address}
           />
         </div>
@@ -145,34 +145,34 @@ export function InterventionForm({
             name="notes"
             rows={3}
             className="input"
-            placeholder="Matériel à emporter, compte rendu, points à vérifier..."
+            placeholder="Equipment to bring, report, points to check..."
             defaultValue={values.notes}
           />
         </div>
         {values.id && (
           <fieldset className="space-y-4 rounded-xl border border-line bg-paper/40 p-4">
-            <legend className="px-1 text-sm font-medium">Bilan de l&apos;intervention</legend>
+            <legend className="px-1 text-sm font-medium">Job report</legend>
             <div>
               <label className="label" htmlFor="feedback">
-                Avis du client
+                Client feedback
               </label>
               <select id="feedback" name="feedback" className="input" defaultValue={values.feedback}>
-                <option value="">Pas encore d&apos;avis</option>
-                <option value="bon">Satisfait</option>
-                <option value="moyen">Mitigé</option>
-                <option value="mauvais">Mécontent</option>
+                <option value="">No feedback yet</option>
+                <option value="bon">Satisfied</option>
+                <option value="moyen">Mixed</option>
+                <option value="mauvais">Unhappy</option>
               </select>
             </div>
             <div>
               <label className="label" htmlFor="issue">
-                Difficulté rencontrée
+                Issue encountered
               </label>
               <textarea
                 id="issue"
                 name="issue"
                 rows={2}
                 className="input"
-                placeholder="Matériel manquant, panne, retard, accès compliqué..."
+                placeholder="Missing equipment, fault, delay, difficult access..."
                 defaultValue={values.issue}
               />
             </div>
@@ -180,9 +180,9 @@ export function InterventionForm({
         )}
         <FormError message={state?.error} />
         <div className="flex gap-2">
-          <SubmitButton pending={pending}>{values.id ? "Enregistrer" : "Planifier"}</SubmitButton>
+          <SubmitButton pending={pending}>{values.id ? "Save" : "Schedule"}</SubmitButton>
           <Link href="/app/interventions" className="btn btn-ghost">
-            Annuler
+            Cancel
           </Link>
         </div>
       </form>
@@ -190,7 +190,7 @@ export function InterventionForm({
       {values.id && (
         <form action={deleteIntervention} className="mt-6 border-t border-line pt-5">
           <input type="hidden" name="id" value={values.id} />
-          <ConfirmButton message="Supprimer cette intervention ?">Supprimer l&apos;intervention</ConfirmButton>
+          <ConfirmButton message="Delete this job?">Delete job</ConfirmButton>
         </form>
       )}
     </div>

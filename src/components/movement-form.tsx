@@ -9,19 +9,19 @@ export function MovementForm({ productId }: { productId: string }) {
 
   return (
     <form action={action} className="card space-y-4 p-5">
-      <p className="label">Mouvement de stock</p>
+      <p className="label">Stock movement</p>
       <input type="hidden" name="productId" value={productId} />
       <div className="grid grid-cols-[6rem_1fr] gap-3">
         <div>
           <label className="sr-only" htmlFor="quantity">
-            Quantité
+            Quantity
           </label>
           <input
             id="quantity"
             name="quantity"
             inputMode="numeric"
             className="input"
-            placeholder="Qté"
+            placeholder="Qty"
             required
           />
         </div>
@@ -29,20 +29,20 @@ export function MovementForm({ productId }: { productId: string }) {
           <label className="sr-only" htmlFor="note">
             Motif
           </label>
-          <input id="note" name="note" className="input" placeholder="Motif (livraison fournisseur, casse...)" />
+          <input id="note" name="note" className="input" placeholder="Reason (supplier delivery, breakage...)" />
         </div>
       </div>
       <FormError message={state?.error} />
       <div className="flex gap-2">
         <button name="direction" value="entree" disabled={pending} className="btn btn-primary flex-1">
-          + Entrée
+          + Stock in
         </button>
         <button name="direction" value="sortie" disabled={pending} className="btn btn-ghost flex-1">
-          − Sortie
+          − Stock out
         </button>
       </div>
       <button name="direction" value="defaut" disabled={pending} className="btn btn-danger w-full">
-        Défectueux / retour SAV
+        Faulty / returned
       </button>
     </form>
   );
@@ -55,19 +55,19 @@ export function InventoryForm({ productId }: { productId: string }) {
   return (
     <form action={action} className="card space-y-3 p-5">
       <label className="label" htmlFor="counted">
-        Inventaire : quantité comptée
+        Stock count: quantity counted
       </label>
       <input type="hidden" name="productId" value={productId} />
       <div className="flex gap-2">
-        <input id="counted" name="counted" inputMode="numeric" className="input" placeholder="Ex. 7" required />
+        <input id="counted" name="counted" inputMode="numeric" className="input" placeholder="e.g. 7" required />
         <button className="btn btn-ghost" disabled={pending}>
-          Corriger
+          Correct
         </button>
       </div>
       <FormError message={state?.error} />
       {state?.ok && (
         <p role="status" className="text-sm text-moss">
-          Stock mis à jour.
+          Stock updated.
         </p>
       )}
     </form>

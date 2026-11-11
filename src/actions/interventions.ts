@@ -12,12 +12,12 @@ const STATUSES = ["planifiee", "en_cours", "terminee", "annulee"] as const;
 
 const interventionSchema = z.object({
   id: z.uuid().optional(),
-  clientId: z.uuid("Choisis un client."),
-  title: z.string().trim().min(1, "Donne un titre à l'intervention.").max(200),
+  clientId: z.uuid("Choose a client."),
+  title: z.string().trim().min(1, "Give the job a title.").max(200),
   type: z.enum(["installation", "maintenance", "depannage", "visite"]),
   status: z.enum(STATUSES),
-  scheduledDate: z.iso.date("Date invalide."),
-  scheduledTime: z.union([z.literal(""), z.string().regex(/^\d{2}:\d{2}$/, "Heure invalide.")]),
+  scheduledDate: z.iso.date("Invalid date."),
+  scheduledTime: z.union([z.literal(""), z.string().regex(/^\d{2}:\d{2}$/, "Invalid time.")]),
   address: z.string().trim().max(500),
   technician: z.string().trim().max(100),
   notes: z.string().trim().max(2000),
@@ -49,7 +49,7 @@ export async function saveIntervention(_prev: FormState, formData: FormData): Pr
     .select({ id: schema.clients.id })
     .from(schema.clients)
     .where(and(eq(schema.clients.id, values.clientId), eq(schema.clients.orgId, org.id)));
-  if (!client) return { error: "Client introuvable." };
+  if (!client) return { error: "Client not found." };
 
   if (id) {
     await db

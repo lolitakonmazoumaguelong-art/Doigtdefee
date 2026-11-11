@@ -27,7 +27,7 @@ export function ClientForm({ client }: { client?: ClientValues }) {
         <div className="grid gap-4 sm:grid-cols-[1fr_11rem]">
           <div>
             <label className="label" htmlFor="name">
-              Nom ou société
+              Name or company
             </label>
             <input id="name" name="name" className="input" defaultValue={client?.name} required />
           </div>
@@ -36,49 +36,49 @@ export function ClientForm({ client }: { client?: ClientValues }) {
               Type
             </label>
             <select id="kind" name="kind" className="input" defaultValue={client?.kind ?? "particulier"}>
-              <option value="particulier">Particulier</option>
-              <option value="entreprise">Entreprise</option>
+              <option value="particulier">Individual</option>
+              <option value="entreprise">Company</option>
             </select>
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="label" htmlFor="phone">
-              Téléphone
+              Phone
             </label>
             <input id="phone" name="phone" type="tel" className="input" defaultValue={client?.phone} />
           </div>
           <div>
             <label className="label" htmlFor="email">
-              E-mail
+              Email
             </label>
             <input id="email" name="email" type="email" className="input" defaultValue={client?.email} />
           </div>
         </div>
         <div>
           <label className="label" htmlFor="address">
-            Adresse du site
+            Site address
           </label>
           <textarea id="address" name="address" rows={2} className="input" defaultValue={client?.address} />
         </div>
         <div>
           <label className="label" htmlFor="notes">
-            Notes internes
+            Internal notes
           </label>
           <textarea
             id="notes"
             name="notes"
             rows={3}
             className="input"
-            placeholder="Matériel déjà installé, accès au site, contact sur place..."
+            placeholder="Equipment already installed, site access, on-site contact..."
             defaultValue={client?.notes}
           />
         </div>
         <FormError message={state?.error} />
         <div className="flex gap-2">
-          <SubmitButton pending={pending}>{client ? "Enregistrer" : "Ajouter le client"}</SubmitButton>
+          <SubmitButton pending={pending}>{client ? "Save" : "Add client"}</SubmitButton>
           <Link href={client ? `/app/clients/${client.id}` : "/app/clients"} className="btn btn-ghost">
-            Annuler
+            Cancel
           </Link>
         </div>
       </form>
@@ -87,7 +87,7 @@ export function ClientForm({ client }: { client?: ClientValues }) {
         <form action={deleteAction} className="mt-6 space-y-3 border-t border-line pt-5">
           <input type="hidden" name="id" value={client.id} />
           <FormError message={deleteState?.error} />
-          <ConfirmButton message={`Supprimer ${client.name} et ses interventions ?`}>Supprimer ce client</ConfirmButton>
+          <ConfirmButton message={`Delete ${client.name} and their jobs?`}>Delete this client</ConfirmButton>
         </form>
       )}
     </div>
