@@ -38,6 +38,17 @@ export const interventionTypeLabel = (id: InterventionType) =>
 export const interventionStatus = (id: InterventionStatus) =>
   INTERVENTION_STATUSES.find((s) => s.id === id) ?? INTERVENTION_STATUSES[0];
 
+export const PAYMENT_METHODS = [
+  { id: "cash", label: "Cash" },
+  { id: "bank", label: "Bank transfer" },
+  { id: "juice", label: "Juice / mobile money" },
+  { id: "card", label: "Card" },
+  { id: "cheque", label: "Cheque" },
+  { id: "other", label: "Other" },
+] as const;
+
+export const paymentMethodLabel = (id: string) => PAYMENT_METHODS.find((m) => m.id === id)?.label ?? "Other";
+
 export const MOVEMENT_LABELS: Record<MovementReason, string> = {
   entree: "Stock in",
   sortie: "Stock out",

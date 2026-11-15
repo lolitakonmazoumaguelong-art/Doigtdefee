@@ -148,6 +148,7 @@ export const documents = pgTable(
     sourceId: uuid("source_id"),
     // true une fois le stock décompté (facture émise)
     stockApplied: boolean("stock_applied").notNull().default(false),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
     // Jeton du lien de consultation envoyé au client final
     shareToken: text("share_token")
       .notNull()
@@ -234,6 +235,71 @@ export const purchaseItems = pgTable(
   (t) => [index("purchase_items_order_idx").on(t.orderId)],
 );
 
+// Encaissements d'une facture (paiements partiels possibles)
+export const payments = pgTable(
+  "payments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => orgs.id, { onDelete: "cascade" }),
+    documentId: uuid("document_id")
+      .notNull()
+      .references(() => documents.id, { onDelete: "cascade" }),
+    amount: integer("amount").notNull(),
+    paidOn: date("paid_on").notNull(),
+    method: text("method").notNull().default("cash"),
+    note: text("note").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("payments_document_idx").on(t.documentId)],
+);
+
+// Liens de réinitialisation de mot de passe (on ne stocke que l'empreinte du jeton)
+export const passwordResets = pgTable("password_resets", {
+  id: text("id").primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});
+
+// Tentatives de connexion ratées, pour bloquer les essais en rafale
+export const loginAttempts = pgTable(
+  "login_attempts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("login_attempts_email_idx").on(t.email, t.createdAt)],
+);
+
+// Contrat de maintenance : visites régulières chez un client
+export const contracts = pgTable(
+  "contracts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => orgs.id, { onDelete: "cascade" }),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clients.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date"),
+    intervalMonths: integer("interval_months").notNull().default(6),
+    nextVisit: date("next_visit"),
+    // Montant annuel, en centimes
+    price: integer("price").notNull().default(0),
+    notes: text("notes").notNull().default(""),
+    status: text("status").$type<"actif" | "termine">().notNull().default("actif"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("contracts_org_idx").on(t.orgId)],
+);
+
 export const messages = pgTable(
   "messages",
   {
@@ -267,3 +333,5 @@ export type Product = typeof products.$inferSelect;
 export type Doc = typeof documents.$inferSelect;
 export type LineItem = typeof lineItems.$inferSelect;
 export type Intervention = typeof interventions.$inferSelect;
+export type Contract = typeof contracts.$inferSelect;
+export type Payment = typeof payments.$inferSelect;

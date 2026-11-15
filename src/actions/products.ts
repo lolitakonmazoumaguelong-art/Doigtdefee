@@ -128,7 +128,8 @@ export async function moveStock(_prev: FormState, formData: FormData): Promise<F
 }
 
 export async function deleteProduct(formData: FormData) {
-  const { org } = await requireSession();
+  const { org, user } = await requireSession();
+  if (user.role !== "owner") return;
   const id = z.uuid().parse(formData.get("id"));
   const db = await getDb();
   await db.delete(schema.products).where(and(eq(schema.products.id, id), eq(schema.products.orgId, org.id)));

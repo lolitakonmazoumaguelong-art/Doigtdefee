@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@/db";
-import { hashPassword, requireSession, verifyPassword } from "@/lib/auth";
+import { createSession, hashPassword, requireSession, verifyPassword } from "@/lib/auth";
 import type { FormState } from "@/lib/types";
 
 const password = z.string().min(8, "The password must be at least 8 characters.").max(200);
@@ -90,5 +90,8 @@ export async function changePassword(_prev: FormState, formData: FormData): Prom
   }
   const db = await getDb();
   await db.update(schema.users).set({ passwordHash: await hashPassword(parsed.data) }).where(eq(schema.users.id, user.id));
+  // Tous les autres appareils sont déconnectés ; celui-ci reçoit une nouvelle session
+  await db.delete(schema.sessions).where(eq(schema.sessions.userId, user.id));
+  await createSession(user.id);
   return { ok: true };
 }

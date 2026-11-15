@@ -15,7 +15,7 @@ export const metadata = { title: "Item" };
 const dateTime = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" });
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
-  const { org } = await requireSession();
+  const { org, user } = await requireSession();
   const data = await getProduct(org.id, (await params).id);
   if (!data) notFound();
   const { product, movements } = data;
@@ -158,12 +158,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             {product.archived ? "Put back in catalogue" : "Discontinued: remove from catalogue"}
           </button>
         </form>
-        <form action={deleteProduct}>
-          <input type="hidden" name="id" value={product.id} />
-          <ConfirmButton message={`Delete ${product.name} from the catalogue? Existing quotes and invoices keep their lines.`}>
-            Delete permanently
-          </ConfirmButton>
-        </form>
+        {user.role === "owner" && (
+          <form action={deleteProduct}>
+            <input type="hidden" name="id" value={product.id} />
+            <ConfirmButton message={`Delete ${product.name} from the catalogue? Existing quotes and invoices keep their lines.`}>
+              Delete permanently
+            </ConfirmButton>
+          </form>
+        )}
       </section>
     </div>
   );

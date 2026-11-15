@@ -12,7 +12,7 @@ const clientSchema = z.object({
   id: z.uuid().optional(),
   name: z.string().trim().min(1, "The client name is required.").max(200),
   kind: z.enum(["particulier", "entreprise"]),
-  email: z.union([z.literal(""), z.email("Invalid email address.")]),
+  email: z.union([z.literal(""), z.email("Invalid email address.")], "Invalid email address."),
   phone: z.string().trim().max(50),
   address: z.string().trim().max(500),
   notes: z.string().trim().max(2000),
@@ -51,7 +51,8 @@ export async function saveClient(_prev: FormState, formData: FormData): Promise<
 }
 
 export async function deleteClient(_prev: FormState, formData: FormData): Promise<FormState> {
-  const { org } = await requireSession();
+  const { org, user } = await requireSession();
+  if (user.role !== "owner") return { error: "Only the account owner can delete a client." };
   const id = z.uuid().safeParse(formData.get("id"));
   if (!id.success) return { error: "Client not found." };
 

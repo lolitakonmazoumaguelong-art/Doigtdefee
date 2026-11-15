@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui";
 import { SearchBox, matchesQuery } from "@/components/search-box";
+import { StockBar } from "@/components/stock-bar";
 import { requireSession } from "@/lib/auth";
 import { categoryLabel } from "@/lib/catalog";
 import { formatMoney } from "@/lib/format";
@@ -42,6 +43,9 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
         <div className="flex flex-wrap gap-2">
           <Link href="/app/stock/reorder" className={`btn ${toOrder.length ? "btn-accent" : "btn-ghost"}`}>
             To order ({toOrder.length})
+          </Link>
+          <Link href="/app/stock/history" className="btn btn-ghost">
+            Movements
           </Link>
           <Link href="/app/stock/import" className="btn btn-ghost">
             Import a list
@@ -116,6 +120,11 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
                       <Badge label={`${p.available} available · low`} tone="warn" />
                     ) : (
                       <Badge label={`${p.available} available`} tone="good" />
+                    )}
+                    {!isService && !p.archived && (
+                      <span className="mt-1.5 block">
+                        <StockBar available={p.available} min={p.minStock} target={p.targetStock} />
+                      </span>
                     )}
                     {details.length > 0 && <p className="mt-1 text-xs text-muted">{details.join(" · ")}</p>}
                   </div>

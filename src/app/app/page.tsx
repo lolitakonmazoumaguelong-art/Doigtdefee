@@ -1,77 +1,115 @@
 import Link from "next/link";
-import { DocList } from "@/components/doc-row";
+import { scheduleContractVisit } from "@/actions/contracts";
 import { InterventionList } from "@/components/intervention-list";
+import { StockBar } from "@/components/stock-bar";
+import { Badge } from "@/components/ui";
 import { requireSession } from "@/lib/auth";
-import { formatMoney, isOverdue } from "@/lib/format";
-import { listClients, listDocuments, listInterventions } from "@/lib/queries";
+import { addDays, formatDate, formatMoney, isOverdue, today } from "@/lib/format";
+import { listClients, listContracts, listDocuments, listInterventions } from "@/lib/queries";
 import { getStockOverview } from "@/lib/stock";
 
 export const metadata = { title: "Dashboard" };
 
+const MONTH = new Intl.DateTimeFormat("en-GB", { month: "short", timeZone: "UTC" });
+
 export default async function DashboardPage() {
   const { user, org } = await requireSession();
-  const [docs, clients, products, interventions] = await Promise.all([
+  const isOwner = user.role === "owner";
+  const [docs, clients, products, interventions, contracts] = await Promise.all([
     listDocuments(org.id),
     listClients(org.id),
     getStockOverview(org.id),
     listInterventions(org.id),
+    listContracts(org.id),
   ]);
+  const money = (cents: number) => formatMoney(cents, org.currency);
+  const now = today();
 
-  const sum = (list: typeof docs) => list.reduce((s, d) => s + d.total, 0);
-  const invoices = docs.filter((d) => d.type === "facture");
-  const paid = invoices.filter((d) => d.status === "paye");
-  const pending = invoices.filter((d) => d.status === "envoye");
-  const overdue = pending.filter(isOverdue);
+  // --- Chiffre d'affaires facturé, 6 derniers mois
+  const invoices = docs.filter((d) => d.type === "facture" && d.status !== "brouillon");
+  const [year, month] = now.split("-").map(Number);
+  const months = Array.from({ length: 6 }, (_, i) => {
+    const date = new Date(Date.UTC(year, month - 1 - (5 - i), 1));
+    const key = date.toISOString().slice(0, 7);
+    return { key, label: MONTH.format(date), total: invoices.filter((d) => d.issueDate.startsWith(key)).reduce((s, d) => s + d.total, 0) };
+  });
+  const current = months[5].total;
+  const previous = months[4].total;
+  const change = previous > 0 ? Math.round(((current - previous) / previous) * 100) : null;
+  const maxMonth = Math.max(...months.map((m) => m.total), 1);
+
+  // --- Impayés, devis en attente, stock, planning
+  const unpaid = invoices
+    .filter((d) => d.status === "envoye")
+    .map((d) => ({ ...d, balance: d.total - d.paid, overdue: isOverdue(d) }))
+    .sort((a, b) => (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999"));
+  const unpaidTotal = unpaid.reduce((s, d) => s + d.balance, 0);
+  const overdueCount = unpaid.filter((d) => d.overdue).length;
   const openQuotes = docs.filter((d) => d.type === "devis" && d.status === "envoye");
-  const lowStock = products.filter((p) => p.toOrder > 0);
-  const upcoming = interventions.filter((i) => i.status === "planifiee" || i.status === "en_cours").slice(0, 5);
+  const lowStock = products.filter((p) => p.toOrder > 0).sort((a, b) => a.available - b.available);
+  const openJobs = interventions.filter((i) => i.status === "planifiee" || i.status === "en_cours");
+  const todayJobs = openJobs.filter((i) => i.scheduledDate === now);
+  const nextJobs = openJobs.filter((i) => i.scheduledDate >= now).slice(0, 5);
+  const lateJobs = openJobs.filter((i) => i.scheduledDate < now);
+  const maintenanceDue = contracts.filter(
+    ({ contract }) => contract.status === "actif" && !!contract.nextVisit && contract.nextVisit <= addDays(now, 30),
+  );
 
-  const stats = [
-    { label: "Collected", value: sum(paid), hint: `${paid.length} paid invoice(s)` },
-    {
-      label: "To collect",
-      value: sum(pending),
-      hint: overdue.length ? `incl. ${overdue.length} overdue` : `${pending.length} unpaid invoice(s)`,
-      alert: overdue.length > 0,
-    },
-    { label: "Open quotes", value: sum(openQuotes), hint: `${openQuotes.length} quote(s) awaiting a reply` },
-  ];
-
-  const isNew = docs.length === 0 && products.length === 0 && clients.length === 0;
   const steps = [
-    {
-      done: !!org.address || !!org.phone,
-      title: "Complete your company details",
-      text: "Address, phone and footer notes appear on every document.",
-      href: "/app/settings",
-      cta: "Open settings",
-    },
-    {
-      done: products.length > 0,
-      title: "Add your equipment",
-      text: "Cameras, recorders, cables, installation packages.",
-      href: "/app/stock/new",
-      cta: "Add an item",
-    },
-    {
-      done: clients.length > 0,
-      title: "Add your first client",
-      text: "You will find their full history on their file.",
-      href: "/app/clients/new",
-      cta: "Add a client",
-    },
-    {
-      done: docs.length > 0,
-      title: "Prepare your first quote",
-      text: "Once accepted, it becomes an invoice in one click.",
-      href: "/app/documents/new?type=devis",
-      cta: "Create a quote",
-    },
+    { done: !!org.address || !!org.phone, title: "Complete your company details", href: "/app/settings", cta: "Open settings" },
+    { done: products.length > 0, title: "Add your equipment", href: "/app/stock/import", cta: "Import a list" },
+    { done: clients.length > 0, title: "Add your first client", href: "/app/clients/new", cta: "Add a client" },
+    { done: docs.length > 0, title: "Prepare your first quote", href: "/app/documents/new?type=devis", cta: "Create a quote" },
   ];
-  const showSteps = steps.some((s) => !s.done);
+
+  const tiles = [
+    ...(isOwner
+      ? [
+          {
+            label: "Revenue this month",
+            value: money(current),
+            hint: change === null ? "Invoiced, incl. VAT" : `${change >= 0 ? "▲ +" : "▼ −"}${Math.abs(change)}% vs last month`,
+            tone: change === null ? "" : change >= 0 ? "text-moss" : "text-clay",
+            href: "/app/statistics",
+          },
+        ]
+      : []),
+    {
+      label: "Unpaid invoices",
+      value: money(unpaidTotal),
+      hint: overdueCount ? `${unpaid.length} invoice(s), ${overdueCount} overdue` : `${unpaid.length} invoice(s) awaiting payment`,
+      tone: overdueCount ? "text-clay" : "",
+      href: "/app/documents?type=facture",
+    },
+    {
+      label: "Quotes awaiting reply",
+      value: String(openQuotes.length),
+      hint: openQuotes.length ? `Worth ${money(openQuotes.reduce((s, d) => s + d.total, 0))}` : "Nothing pending",
+      tone: "",
+      href: "/app/documents?type=devis",
+    },
+    {
+      label: "Low stock",
+      value: `${lowStock.length} item${lowStock.length === 1 ? "" : "s"}`,
+      hint: lowStock.length ? "Tap to see what to order" : "All above their thresholds",
+      tone: lowStock.length ? "text-clay" : "",
+      href: "/app/stock/reorder",
+    },
+    ...(isOwner
+      ? []
+      : [
+          {
+            label: "Jobs today",
+            value: String(todayJobs.length),
+            hint: lateJobs.length ? `${lateJobs.length} late job(s) to update` : "On your schedule",
+            tone: lateJobs.length ? "text-clay" : "",
+            href: "/app/interventions",
+          },
+        ]),
+  ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm text-muted">Hello {user.name.split(" ")[0]}</p>
@@ -81,6 +119,9 @@ export default async function DashboardPage() {
           <Link href="/app/interventions/new" className="btn btn-ghost">
             Schedule a job
           </Link>
+          <Link href="/app/documents/new?type=facture" className="btn btn-ghost">
+            New invoice
+          </Link>
           <Link href="/app/documents/new?type=devis" className="btn btn-primary">
             New quote
           </Link>
@@ -88,44 +129,25 @@ export default async function DashboardPage() {
       </header>
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <div key={stat.label} className={`card p-4 sm:p-5 ${stat.alert ? "border-clay/40" : ""}`}>
-            <p className="text-xs font-medium tracking-wide text-muted uppercase">{stat.label}</p>
-            <p className="mt-2 text-lg font-semibold tabular-nums sm:text-2xl">{formatMoney(stat.value, org.currency)}</p>
-            <p className={`mt-1 text-xs ${stat.alert ? "text-clay" : "text-muted"}`}>{stat.hint}</p>
-          </div>
+        {tiles.map((tile) => (
+          <Link key={tile.label} href={tile.href} className="card p-4 transition-colors hover:bg-paper/60 sm:p-5">
+            <p className="text-xs font-medium tracking-wide text-muted uppercase">{tile.label}</p>
+            <p className="mt-2 text-lg font-semibold tabular-nums sm:text-2xl">{tile.value}</p>
+            <p className={`mt-1 text-xs ${tile.tone || "text-muted"}`}>{tile.hint}</p>
+          </Link>
         ))}
-        <Link
-          href="/app/stock/reorder"
-          className={`card p-4 transition-colors hover:bg-paper/60 sm:p-5 ${lowStock.length ? "border-clay/40" : ""}`}
-        >
-          <p className="text-xs font-medium tracking-wide text-muted uppercase">To order</p>
-          <p className={`mt-2 text-lg font-semibold tabular-nums sm:text-2xl ${lowStock.length ? "text-clay" : ""}`}>
-            {lowStock.length} item{lowStock.length === 1 ? "" : "s"}
-          </p>
-          <p className="mt-1 truncate text-xs text-muted">
-            {lowStock.length ? lowStock.slice(0, 2).map((p) => p.name).join(", ") : "Nothing to order right now"}
-          </p>
-        </Link>
       </section>
 
-      {showSteps && (
-        <section className="card p-6 sm:p-8">
-          <h2 className="font-display text-3xl">{isNew ? "Welcome! Four steps to get started" : "Finish setting up"}</h2>
-          <ol className="mt-5 space-y-4">
+      {steps.some((s) => !s.done) && (
+        <section className="card p-5 sm:p-6">
+          <h2 className="font-display text-2xl">Finish setting up</h2>
+          <ol className="mt-4 space-y-3">
             {steps.map((step, i) => (
-              <li key={step.title} className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                <span
-                  className={`grid size-8 shrink-0 place-items-center rounded-full text-sm font-semibold ${
-                    step.done ? "bg-moss text-paper" : "bg-chalk text-ink"
-                  }`}
-                >
+              <li key={step.title} className="flex flex-wrap items-center gap-3">
+                <span className={`grid size-7 shrink-0 place-items-center rounded-full text-xs font-semibold ${step.done ? "bg-moss text-paper" : "bg-chalk text-ink"}`}>
                   {step.done ? "✓" : i + 1}
                 </span>
-                <div className="min-w-0 flex-1 basis-48">
-                  <p className={`text-sm font-medium ${step.done ? "text-muted line-through" : ""}`}>{step.title}</p>
-                  <p className="text-sm text-muted">{step.text}</p>
-                </div>
+                <p className={`min-w-0 flex-1 basis-40 text-sm ${step.done ? "text-muted line-through" : "font-medium"}`}>{step.title}</p>
                 {!step.done && (
                   <Link href={step.href} className="btn btn-ghost">
                     {step.cta}
@@ -137,29 +159,146 @@ export default async function DashboardPage() {
         </section>
       )}
 
-      {upcoming.length > 0 && (
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-2xl">Upcoming jobs</h2>
-            <Link href="/app/interventions" className="text-sm text-muted underline underline-offset-4 hover:text-ink">
-              View all
-            </Link>
-          </div>
-          <InterventionList rows={upcoming} />
-        </section>
-      )}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {isOwner && (
+          <section className="card p-5 sm:p-6">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className="font-display text-2xl">Revenue, last 6 months</h2>
+              <Link href="/app/statistics" className="text-sm text-muted underline underline-offset-4 hover:text-ink">
+                Statistics
+              </Link>
+            </div>
+            <div className="mt-5 flex h-36 items-end gap-2 border-b border-line">
+              {months.map((m, index) => (
+                <div key={m.key} className="group relative flex h-full flex-1 flex-col justify-end" tabIndex={0}>
+                  <span className="pointer-events-none absolute -top-1 left-1/2 z-10 hidden -translate-x-1/2 -translate-y-full rounded-md bg-ink px-2 py-1 text-xs whitespace-nowrap text-paper group-hover:block group-focus:block">
+                    {money(m.total)}
+                  </span>
+                  <div
+                    className={`mx-auto w-full max-w-12 rounded-t ${index === 5 ? "bg-ink" : "bg-ink/35"} group-hover:bg-moss`}
+                    style={{ height: `${m.total > 0 ? Math.max((m.total / maxMonth) * 100, 3) : 0}%` }}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="mt-1.5 flex gap-2">
+              {months.map((m, index) => (
+                <span key={m.key} className={`flex-1 text-center text-[11px] ${index === 5 ? "font-medium" : "text-muted"}`}>
+                  {m.label}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
 
-      {docs.length > 0 && (
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-2xl">Latest documents</h2>
-            <Link href="/app/documents" className="text-sm text-muted underline underline-offset-4 hover:text-ink">
+        <section className="card p-5 sm:p-6">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="font-display text-2xl">Unpaid invoices</h2>
+            <Link href="/app/documents?type=facture" className="text-sm text-muted underline underline-offset-4 hover:text-ink">
               View all
             </Link>
           </div>
-          <DocList docs={docs.slice(0, 6)} currency={org.currency} />
+          {unpaid.length === 0 ? (
+            <p className="mt-4 text-sm text-muted">Nothing to collect. Every issued invoice is paid.</p>
+          ) : (
+            <ul className="mt-3 divide-y divide-line">
+              {unpaid.slice(0, 5).map((doc) => (
+                <li key={doc.id}>
+                  <Link href={`/app/documents/${doc.id}`} className="flex items-center gap-3 py-2.5 text-sm">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium">{doc.clientName}</span>
+                      <span className="block text-xs text-muted tabular-nums">
+                        {doc.number}
+                        {doc.dueDate && ` · due ${formatDate(doc.dueDate)}`}
+                      </span>
+                    </span>
+                    {doc.overdue && <Badge label="Overdue" tone="bad" />}
+                    <span className="shrink-0 font-semibold tabular-nums">{money(doc.balance)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
-      )}
+
+        <section className="card p-5 sm:p-6">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="font-display text-2xl">Low stock</h2>
+            <Link href="/app/stock/reorder" className="text-sm text-muted underline underline-offset-4 hover:text-ink">
+              To order
+            </Link>
+          </div>
+          {lowStock.length === 0 ? (
+            <p className="mt-4 text-sm text-muted">All items are above their alert threshold.</p>
+          ) : (
+            <ul className="mt-3 space-y-3">
+              {lowStock.slice(0, 5).map((p) => (
+                <li key={p.id}>
+                  <Link href={`/app/stock/${p.id}`} className="block text-sm">
+                    <span className="flex items-baseline justify-between gap-3">
+                      <span className="truncate font-medium">{p.name}</span>
+                      <span className={`shrink-0 tabular-nums ${p.available <= 0 ? "font-semibold text-clay" : "text-muted"}`}>
+                        {p.available <= 0 ? "Out of stock" : `${p.available} left`} · order {p.toOrder}
+                      </span>
+                    </span>
+                    <span className="mt-1.5 block">
+                      <StockBar available={p.available} min={p.minStock} target={p.targetStock} />
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="card p-5 sm:p-6">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="font-display text-2xl">Maintenance due</h2>
+            <span className="text-sm text-muted">Next 30 days</span>
+          </div>
+          {maintenanceDue.length === 0 ? (
+            <p className="mt-4 text-sm text-muted">No maintenance visit due. Contracts are added from a client file.</p>
+          ) : (
+            <ul className="mt-3 divide-y divide-line">
+              {maintenanceDue.slice(0, 5).map(({ contract, clientName }) => (
+                <li key={contract.id} className="flex flex-wrap items-center gap-3 py-2.5 text-sm">
+                  <Link href={`/app/clients/${contract.clientId}`} className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{clientName}</span>
+                    <span className={`block text-xs ${contract.nextVisit! < now ? "text-clay" : "text-muted"}`}>
+                      {contract.title} · {contract.nextVisit! < now ? "was due" : "due"} {formatDate(contract.nextVisit)}
+                    </span>
+                  </Link>
+                  <form action={scheduleContractVisit}>
+                    <input type="hidden" name="id" value={contract.id} />
+                    <button className="btn btn-ghost">Schedule</button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-display text-2xl">
+            Upcoming jobs {todayJobs.length > 0 && <span className="text-muted">· {todayJobs.length} today</span>}
+          </h2>
+          <Link href="/app/interventions?view=calendar" className="text-sm text-muted underline underline-offset-4 hover:text-ink">
+            Calendar
+          </Link>
+        </div>
+        {lateJobs.length > 0 && (
+          <p className="mb-3 rounded-lg border border-clay/30 bg-clay/10 px-3 py-2 text-sm text-clay">
+            {lateJobs.length} job(s) from past days are still open. Mark them completed or reschedule them.
+          </p>
+        )}
+        {nextJobs.length ? (
+          <InterventionList rows={nextJobs} />
+        ) : (
+          <p className="card p-5 text-sm text-muted">Nothing scheduled.</p>
+        )}
+      </section>
     </div>
   );
 }

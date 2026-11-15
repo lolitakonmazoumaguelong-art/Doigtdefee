@@ -9,12 +9,15 @@ export function ShareButtons({
   orgName,
   clientPhone,
   clientEmail,
+  reminder,
 }: {
   token: string;
   label: string;
   orgName: string;
   clientPhone: string;
   clientEmail: string;
+  /** Texte de relance, affiché seulement pour une facture impayée */
+  reminder?: string;
 }) {
   const [copied, setCopied] = useState(false);
   const link = () => `${window.location.origin}/d/${token}`;
@@ -40,6 +43,21 @@ export function ShareButtons({
   return (
     <div className="card mx-auto flex max-w-3xl flex-wrap items-center gap-2 p-4 print:hidden">
       <p className="mr-auto text-sm font-medium">Send to client</p>
+      {reminder && (
+        <button
+          type="button"
+          className="btn btn-danger"
+          onClick={() =>
+            window.open(
+              `https://wa.me/${clientPhone.replace(/\D/g, "")}?text=${encodeURIComponent(`${reminder} ${link()}`)}`,
+              "_blank",
+              "noopener",
+            )
+          }
+        >
+          Payment reminder
+        </button>
+      )}
       <button type="button" className="btn btn-ghost" onClick={whatsapp}>
         WhatsApp
       </button>

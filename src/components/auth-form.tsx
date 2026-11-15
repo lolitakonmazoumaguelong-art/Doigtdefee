@@ -68,8 +68,10 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         {isSignup ? "Create my account" : "Log in"}
       </SubmitButton>
       {!isSignup && (
-        <p className="text-center text-xs text-muted">
-          Forgot your password? Your company owner can set a new one for you from their settings.
+        <p className="text-center text-sm">
+          <Link href="/forgot-password" className="text-muted underline underline-offset-4 hover:text-ink">
+            Forgot your password?
+          </Link>
         </p>
       )}
       <p className="text-center text-sm text-muted">

@@ -47,3 +47,30 @@ Après une modification de `schema.ts` : `npm run db:generate`, puis `npm run db
 - La liste « À commander » se calcule seule ; un bon de commande reçu remet le matériel en stock.
 - Un produit arrêté sort des devis et des commandes mais garde son historique.
 - Les statistiques (réservées au responsable) s'appuient sur les factures émises, les bilans d'intervention et les produits signalés défectueux.
+
+## Base en ligne : mises à niveau automatiques
+
+Les nouvelles tables et colonnes sont listées dans `src/db/upgrades.ts` et appliquées toutes seules au démarrage
+de l'appli en ligne (instructions rejouables, `IF NOT EXISTS`). Rien à coller dans Supabase après un déploiement.
+
+## Récupération de mot de passe par e-mail
+
+Désactivée tant que la variable `RESEND_API_KEY` n'existe pas dans Vercel. Pour l'activer :
+
+1. Créer un compte sur resend.com et une clé API.
+2. Vercel > Settings > Environment Variables : ajouter `RESEND_API_KEY`.
+3. Pour écrire à n'importe quelle adresse, vérifier un nom de domaine dans Resend puis ajouter
+   `EMAIL_FROM`, par exemple `Doigt de Fée <no-reply@mondomaine.mu>`. Sans domaine vérifié, Resend
+   n'envoie qu'à l'adresse du compte Resend.
+
+## Sécurité et rôles
+
+- Mots de passe hachés (scrypt), session en cookie HttpOnly, blocage après 8 essais ratés en 15 minutes.
+- Chaque requête est filtrée par entreprise ; une autre entreprise reçoit « introuvable ».
+- Responsable : tout. Employé : pas de suppression (documents, clients, articles, contrats, paiements),
+  pas de statistiques, pas de réglages, pas d'export.
+
+## Sauvegardes
+
+- Dans l'appli : Settings > Your data > « Download full backup » (JSON complet, sans mots de passe) et exports CSV.
+- Sauvegarde automatique et restauration en un clic : offre Pro de Supabase (sauvegardes quotidiennes).

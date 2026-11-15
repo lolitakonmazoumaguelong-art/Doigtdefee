@@ -1,5 +1,6 @@
 import "server-only";
 import { mkdirSync } from "node:fs";
+import { sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "./schema";
 
@@ -15,7 +16,10 @@ async function init(): Promise<DB> {
     const { drizzle } = await import("drizzle-orm/postgres-js");
     const postgres = (await import("postgres")).default;
     // prepare: false est requis par le pooler de Supabase
-    return drizzle(postgres(url, { prepare: false }), { schema });
+    const db = drizzle(postgres(url, { prepare: false }), { schema });
+    const { UPGRADES } = await import("./upgrades");
+    for (const statement of UPGRADES) await db.execute(sql.raw(statement));
+    return db;
   }
 
   if (process.env.VERCEL) {

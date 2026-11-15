@@ -24,9 +24,11 @@ type Values = {
 export function InterventionForm({
   values,
   clients,
+  team = [],
 }: {
   values: Values;
   clients: { id: string; name: string; address: string }[];
+  team?: string[];
 }) {
   const { state, pending, formProps } = useFormAction(saveIntervention);
 
@@ -108,7 +110,12 @@ export function InterventionForm({
             <label className="label" htmlFor="technician">
               Technician
             </label>
-            <input id="technician" name="technician" className="input" defaultValue={values.technician} />
+            <input id="technician" name="technician" list="team-members" className="input" defaultValue={values.technician} />
+            <datalist id="team-members">
+              {team.map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
           </div>
           <div>
             <label className="label" htmlFor="status">

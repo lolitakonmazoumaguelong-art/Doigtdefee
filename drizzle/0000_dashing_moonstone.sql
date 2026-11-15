@@ -10,6 +10,21 @@ CREATE TABLE "clients" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "contracts" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"client_id" uuid NOT NULL,
+	"title" text NOT NULL,
+	"start_date" date NOT NULL,
+	"end_date" date,
+	"interval_months" integer DEFAULT 6 NOT NULL,
+	"next_visit" date,
+	"price" integer DEFAULT 0 NOT NULL,
+	"notes" text DEFAULT '' NOT NULL,
+	"status" text DEFAULT 'actif' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "documents" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"org_id" uuid NOT NULL,
@@ -27,6 +42,7 @@ CREATE TABLE "documents" (
 	"notes" text DEFAULT '' NOT NULL,
 	"source_id" uuid,
 	"stock_applied" boolean DEFAULT false NOT NULL,
+	"paid_at" timestamp with time zone,
 	"share_token" text NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "documents_share_token_unique" UNIQUE("share_token")
@@ -59,6 +75,12 @@ CREATE TABLE "line_items" (
 	"unit_price" integer NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "login_attempts" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"email" text NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "messages" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"org_id" uuid NOT NULL,
@@ -82,6 +104,23 @@ CREATE TABLE "orgs" (
 	"currency" text DEFAULT 'MUR' NOT NULL,
 	"tax_rate" real DEFAULT 0 NOT NULL,
 	"footer_note" text DEFAULT '' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "password_resets" (
+	"id" text PRIMARY KEY NOT NULL,
+	"user_id" uuid NOT NULL,
+	"expires_at" timestamp with time zone NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "payments" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"org_id" uuid NOT NULL,
+	"document_id" uuid NOT NULL,
+	"amount" integer NOT NULL,
+	"paid_on" date NOT NULL,
+	"method" text DEFAULT 'cash' NOT NULL,
+	"note" text DEFAULT '' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -150,6 +189,8 @@ CREATE TABLE "users" (
 );
 --> statement-breakpoint
 ALTER TABLE "clients" ADD CONSTRAINT "clients_org_id_orgs_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."orgs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "contracts" ADD CONSTRAINT "contracts_org_id_orgs_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."orgs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "contracts" ADD CONSTRAINT "contracts_client_id_clients_id_fk" FOREIGN KEY ("client_id") REFERENCES "public"."clients"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "documents" ADD CONSTRAINT "documents_org_id_orgs_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."orgs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "documents" ADD CONSTRAINT "documents_client_id_clients_id_fk" FOREIGN KEY ("client_id") REFERENCES "public"."clients"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "interventions" ADD CONSTRAINT "interventions_org_id_orgs_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."orgs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -158,6 +199,9 @@ ALTER TABLE "line_items" ADD CONSTRAINT "line_items_document_id_documents_id_fk"
 ALTER TABLE "line_items" ADD CONSTRAINT "line_items_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "messages" ADD CONSTRAINT "messages_org_id_orgs_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."orgs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "messages" ADD CONSTRAINT "messages_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "password_resets" ADD CONSTRAINT "password_resets_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "payments" ADD CONSTRAINT "payments_org_id_orgs_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."orgs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "payments" ADD CONSTRAINT "payments_document_id_documents_id_fk" FOREIGN KEY ("document_id") REFERENCES "public"."documents"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "products" ADD CONSTRAINT "products_org_id_orgs_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."orgs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "purchase_items" ADD CONSTRAINT "purchase_items_order_id_purchase_orders_id_fk" FOREIGN KEY ("order_id") REFERENCES "public"."purchase_orders"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "purchase_items" ADD CONSTRAINT "purchase_items_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
@@ -167,11 +211,14 @@ ALTER TABLE "stock_movements" ADD CONSTRAINT "stock_movements_org_id_orgs_id_fk"
 ALTER TABLE "stock_movements" ADD CONSTRAINT "stock_movements_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "users" ADD CONSTRAINT "users_org_id_orgs_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."orgs"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "clients_org_idx" ON "clients" USING btree ("org_id");--> statement-breakpoint
+CREATE INDEX "contracts_org_idx" ON "contracts" USING btree ("org_id");--> statement-breakpoint
 CREATE INDEX "documents_org_idx" ON "documents" USING btree ("org_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "documents_number_idx" ON "documents" USING btree ("org_id","type","year","seq");--> statement-breakpoint
 CREATE INDEX "interventions_org_idx" ON "interventions" USING btree ("org_id");--> statement-breakpoint
 CREATE INDEX "line_items_document_idx" ON "line_items" USING btree ("document_id");--> statement-breakpoint
+CREATE INDEX "login_attempts_email_idx" ON "login_attempts" USING btree ("email","created_at");--> statement-breakpoint
 CREATE INDEX "messages_org_idx" ON "messages" USING btree ("org_id","created_at");--> statement-breakpoint
+CREATE INDEX "payments_document_idx" ON "payments" USING btree ("document_id");--> statement-breakpoint
 CREATE INDEX "products_org_idx" ON "products" USING btree ("org_id");--> statement-breakpoint
 CREATE INDEX "purchase_items_order_idx" ON "purchase_items" USING btree ("order_id");--> statement-breakpoint
 CREATE INDEX "purchase_orders_org_idx" ON "purchase_orders" USING btree ("org_id");--> statement-breakpoint

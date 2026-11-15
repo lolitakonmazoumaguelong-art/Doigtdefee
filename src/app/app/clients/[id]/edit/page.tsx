@@ -6,7 +6,7 @@ import { getClient } from "@/lib/queries";
 export const metadata = { title: "Edit client" };
 
 export default async function EditClientPage({ params }: { params: Promise<{ id: string }> }) {
-  const { org } = await requireSession();
+  const { org, user } = await requireSession();
   const client = await getClient(org.id, (await params).id);
   if (!client) notFound();
 
@@ -14,6 +14,7 @@ export default async function EditClientPage({ params }: { params: Promise<{ id:
     <div className="space-y-6">
       <h1 className="page-title">Edit {client.name}</h1>
       <ClientForm
+        canDelete={user.role === "owner"}
         client={{
           id: client.id,
           name: client.name,

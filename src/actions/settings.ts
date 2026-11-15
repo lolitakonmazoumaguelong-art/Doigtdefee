@@ -12,7 +12,7 @@ const settingsSchema = z.object({
   name: z.string().trim().min(1, "The company name is required.").max(200),
   address: z.string().trim().max(500),
   phone: z.string().trim().max(50),
-  email: z.union([z.literal(""), z.email("Invalid email address.")]),
+  email: z.union([z.literal(""), z.email("Invalid email address.")], "Invalid email address."),
   legalId: z.string().trim().max(100),
   vatNumber: z.string().trim().max(100),
   currency: z.enum(CURRENCY_CODES),

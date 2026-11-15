@@ -1,15 +1,19 @@
 import Link from "next/link";
 import { InterventionForm } from "@/components/intervention-form";
 import { requireSession } from "@/lib/auth";
+import { listMembers } from "@/lib/queries";
 import { today } from "@/lib/format";
 import { listClients } from "@/lib/queries";
 
 export const metadata = { title: "New job" };
 
-export default async function NewInterventionPage({ searchParams }: { searchParams: Promise<{ client?: string }> }) {
+export default async function NewInterventionPage({ searchParams }: { searchParams: Promise<{ client?: string; date?: string }> }) {
   const { org, user } = await requireSession();
   const clients = await listClients(org.id);
-  const preselected = (await searchParams).client;
+  const team = (await listMembers(org.id)).map((member) => member.name);
+  const query = await searchParams;
+  const preselected = query.client;
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(query.date ?? "") ? query.date! : today();
 
   return (
     <div className="space-y-6">
@@ -24,12 +28,13 @@ export default async function NewInterventionPage({ searchParams }: { searchPara
       ) : (
         <InterventionForm
           clients={clients}
+          team={team}
           values={{
             clientId: clients.some((c) => c.id === preselected) ? preselected! : "",
             title: "",
             type: "installation",
             status: "planifiee",
-            scheduledDate: today(),
+            scheduledDate: date,
             scheduledTime: "",
             address: "",
             technician: user.name,

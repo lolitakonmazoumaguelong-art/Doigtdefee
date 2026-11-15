@@ -51,11 +51,13 @@ export async function renderDocumentPdf({
   doc,
   client,
   items,
+  paid = 0,
 }: {
   org: Org;
   doc: Doc;
   client: Client;
   items: LineItem[];
+  paid?: number;
 }): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
@@ -190,6 +192,14 @@ export async function renderDocumentPdf({
   y -= 17;
   text(doc.taxRate > 0 ? "Total (incl. VAT)" : "Total", LABEL_X, y, 12, bold);
   textRight(money(totals.total), y, 12, bold);
+  if (doc.type === "facture" && paid > 0) {
+    y -= 17;
+    text("Paid", LABEL_X, y, 10, regular, MUTED);
+    textRight(`- ${money(paid)}`, y);
+    y -= 15;
+    text("Balance due", LABEL_X, y, 11, bold);
+    textRight(money(Math.max(totals.total - paid, 0)), y, 11, bold);
+  }
   y -= 30;
 
   // --- Note et mentions

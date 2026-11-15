@@ -48,6 +48,15 @@ export function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
+export function addMonths(iso: string, months: number) {
+  const d = new Date(`${iso}T12:00:00Z`);
+  const day = d.getUTCDate();
+  d.setUTCMonth(d.getUTCMonth() + months, 1);
+  const last = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0, 12)).getUTCDate();
+  d.setUTCDate(Math.min(day, last));
+  return d.toISOString().slice(0, 10);
+}
+
 export function addDays(iso: string, days: number) {
   const d = new Date(`${iso}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);

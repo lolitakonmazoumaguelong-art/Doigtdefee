@@ -4,6 +4,7 @@ import { setInterventionStatus } from "@/actions/interventions";
 import { InterventionForm } from "@/components/intervention-form";
 import { Badge } from "@/components/ui";
 import { requireSession } from "@/lib/auth";
+import { listMembers } from "@/lib/queries";
 import { interventionStatus } from "@/lib/catalog";
 import { getIntervention, listClients } from "@/lib/queries";
 
@@ -14,6 +15,7 @@ export default async function InterventionPage({ params }: { params: Promise<{ i
   const intervention = await getIntervention(org.id, (await params).id);
   if (!intervention) notFound();
   const clients = await listClients(org.id);
+  const team = (await listMembers(org.id)).map((member) => member.name);
   const client = clients.find((c) => c.id === intervention.clientId);
   const status = interventionStatus(intervention.status);
   const next =
@@ -57,6 +59,7 @@ export default async function InterventionPage({ params }: { params: Promise<{ i
       <InterventionForm
         key={intervention.status}
         clients={clients}
+          team={team}
         values={{
           id: intervention.id,
           clientId: intervention.clientId,

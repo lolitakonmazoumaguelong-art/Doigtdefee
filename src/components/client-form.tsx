@@ -16,7 +16,7 @@ type ClientValues = {
   notes: string;
 };
 
-export function ClientForm({ client }: { client?: ClientValues }) {
+export function ClientForm({ client, canDelete = false }: { client?: ClientValues; canDelete?: boolean }) {
   const { state, pending, formProps } = useFormAction(saveClient);
   const [deleteState, deleteAction] = useActionState(deleteClient, undefined);
 
@@ -83,7 +83,7 @@ export function ClientForm({ client }: { client?: ClientValues }) {
         </div>
       </form>
 
-      {client && (
+      {client && canDelete && (
         <form action={deleteAction} className="mt-6 space-y-3 border-t border-line pt-5">
           <input type="hidden" name="id" value={client.id} />
           <FormError message={deleteState?.error} />

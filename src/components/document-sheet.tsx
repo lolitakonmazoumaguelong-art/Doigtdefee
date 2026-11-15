@@ -2,7 +2,19 @@ import type { Client, Doc, LineItem, Org } from "@/db/schema";
 import { computeTotals, formatDate, formatMoney, lineTotal, typeLabel } from "@/lib/format";
 
 /** La feuille du devis ou de la facture, aux couleurs de l'entreprise. */
-export function DocumentSheet({ org, doc, client, items }: { org: Org; doc: Doc; client: Client; items: LineItem[] }) {
+export function DocumentSheet({
+  org,
+  doc,
+  client,
+  items,
+  paid = 0,
+}: {
+  org: Org;
+  doc: Doc;
+  client: Client;
+  items: LineItem[];
+  paid?: number;
+}) {
   const totals = computeTotals(items, doc.taxRate);
   const isQuote = doc.type === "devis";
   const money = (cents: number) => formatMoney(cents, org.currency);
@@ -91,6 +103,18 @@ export function DocumentSheet({ org, doc, client, items }: { org: Org; doc: Doc;
               <dt>{doc.taxRate > 0 ? "Total (incl. VAT)" : "Total"}</dt>
               <dd className="tabular-nums">{money(totals.total)}</dd>
             </div>
+            {doc.type === "facture" && paid > 0 && (
+              <>
+                <div className="flex justify-between">
+                  <dt className="text-muted">Paid</dt>
+                  <dd className="tabular-nums">− {money(paid)}</dd>
+                </div>
+                <div className="flex justify-between font-semibold">
+                  <dt>Balance due</dt>
+                  <dd className="tabular-nums">{money(Math.max(totals.total - paid, 0))}</dd>
+                </div>
+              </>
+            )}
           </dl>
         </div>
 

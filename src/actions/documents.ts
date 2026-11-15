@@ -24,7 +24,7 @@ const docSchema = z.object({
   type: z.enum(["devis", "facture"]),
   clientId: z.uuid("Choose a client."),
   issueDate: z.iso.date("Invalid issue date."),
-  dueDate: z.union([z.literal(""), z.iso.date("Invalid due date.")]),
+  dueDate: z.union([z.literal(""), z.iso.date("Invalid due date.")], "Invalid due date."),
   taxRate: z.coerce.number("Invalid VAT rate.").min(0).max(100),
   notes: z.string().trim().max(2000),
   items: z.array(itemSchema).min(1, "Add at least one line.").max(500, "Too many lines (500 max)."),
@@ -164,7 +164,7 @@ export async function saveDocument(_prev: FormState, formData: FormData): Promis
 // Une facture émise ne repasse jamais en brouillon : son stock est déjà sorti.
 const ALLOWED: Record<DocType, DocStatus[]> = {
   devis: ["brouillon", "envoye", "accepte", "refuse"],
-  facture: ["envoye", "paye"],
+  facture: ["envoye"],
 };
 
 export async function setStatus(formData: FormData) {
@@ -246,7 +246,8 @@ export async function convertToInvoice(formData: FormData) {
 }
 
 export async function deleteDocument(formData: FormData) {
-  const { org } = await requireSession();
+  const { org, user } = await requireSession();
+  if (user.role !== "owner") return;
   const id = z.uuid().parse(formData.get("id"));
   const db = await getDb();
   await db.transaction(async (tx) => {
