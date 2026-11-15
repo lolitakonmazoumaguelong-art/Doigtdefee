@@ -1,12 +1,15 @@
 import Link from "next/link";
+import { SearchBox, matchesQuery } from "@/components/search-box";
 import { requireSession } from "@/lib/auth";
 import { listClients } from "@/lib/queries";
 
 export const metadata = { title: "Clients" };
 
-export default async function ClientsPage() {
+export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { org } = await requireSession();
-  const clients = await listClients(org.id);
+  const q = ((await searchParams).q ?? "").trim();
+  const all = await listClients(org.id);
+  const clients = q ? all.filter((c) => matchesQuery(q, c.name, c.phone, c.email, c.address)) : all;
 
   return (
     <div className="space-y-6">
@@ -17,9 +20,11 @@ export default async function ClientsPage() {
         </Link>
       </header>
 
+      {all.length > 0 && <SearchBox q={q} placeholder="Search by name, phone, email..." />}
+
       {clients.length === 0 ? (
         <div className="card p-8 text-center">
-          <p className="font-display text-2xl">No clients yet</p>
+          <p className="font-display text-2xl">{q ? `No client matches “${q}”` : "No clients yet"}</p>
           <p className="mt-2 text-sm text-muted">Add your first client to prepare a quote for them.</p>
         </div>
       ) : (

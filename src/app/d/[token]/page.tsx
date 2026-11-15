@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DocumentSheet } from "@/components/document-sheet";
-import { PrintButton } from "@/components/ui";
 import { getSharedDocument } from "@/lib/queries";
 
 // Page publique : le client final consulte son devis ou sa facture sans compte.
@@ -15,7 +14,9 @@ export default async function SharedDocumentPage({ params }: { params: Promise<{
     <main className="flex-1 px-4 py-8 print:p-0">
       <div className="mx-auto mb-4 flex max-w-3xl items-center justify-between gap-4 print:hidden">
         <p className="text-sm text-muted">Document sent by {data.org.name}</p>
-        <PrintButton label="Download as PDF" />
+        <a href={`/d/${data.doc.shareToken}/pdf`} download className="btn btn-primary">
+          Download PDF
+        </a>
       </div>
       <DocumentSheet {...data} />
     </main>

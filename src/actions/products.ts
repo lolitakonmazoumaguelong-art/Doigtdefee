@@ -8,6 +8,7 @@ import { getDb, schema } from "@/db";
 import { requireSession } from "@/lib/auth";
 import { CATEGORY_IDS } from "@/lib/catalog";
 import { parseAmount } from "@/lib/format";
+import { parseCatalogueImport } from "@/lib/import";
 import type { FormState } from "@/lib/types";
 
 const MAX_CENTS = 2_000_000_000;
@@ -72,6 +73,10 @@ export async function saveProduct(_prev: FormState, formData: FormData): Promise
     });
   }
   revalidatePath("/app", "layout");
+  // « Save and add another » : on revient sur un formulaire vide
+  if (!id && formData.get("again")) {
+    redirect(`/app/stock/new?added=${encodeURIComponent(values.name)}&n=${Date.now()}`);
+  }
   redirect(`/app/stock/${productId}`);
 }
 
@@ -169,4 +174,32 @@ export async function setProductArchived(formData: FormData) {
     .set({ archived: formData.get("archived") === "1" })
     .where(and(eq(schema.products.id, id), eq(schema.products.orgId, org.id)));
   revalidatePath("/app", "layout");
+}
+
+/** Import en masse : liste collée depuis Excel ou fichier CSV. */
+export async function importProducts(_prev: FormState, formData: FormData): Promise<FormState> {
+  const { org } = await requireSession();
+  const raw = String(formData.get("rows") ?? "");
+  if (raw.length > 500_000) return { error: "This list is too large. Import it in several parts." };
+  const { rows, errors } = parseCatalogueImport(raw);
+  if (rows.length > 2000) return { error: "Too many rows at once (2000 max). Import it in several parts." };
+  if (!rows.length) return { error: errors[0] ?? "No valid row found.", details: errors.slice(1, 8) };
+
+  const db = await getDb();
+  await db.transaction(async (tx) => {
+    const created = await tx
+      .insert(schema.products)
+      .values(rows.map((row) => ({ ...row, orgId: org.id, minStock: row.kind === "service" ? 0 : 2 })))
+      .returning({ id: schema.products.id, stock: schema.products.stock });
+    const movements = created
+      .filter((p) => p.stock > 0)
+      .map((p) => ({ orgId: org.id, productId: p.id, delta: p.stock, reason: "entree" as const, note: "Imported opening stock" }));
+    if (movements.length) await tx.insert(schema.stockMovements).values(movements);
+  });
+  revalidatePath("/app", "layout");
+  return {
+    ok: true,
+    message: `${rows.length} item(s) imported.${errors.length ? ` ${errors.length} row(s) skipped.` : ""}`,
+    details: errors.slice(0, 8),
+  };
 }

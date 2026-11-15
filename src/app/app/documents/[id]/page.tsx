@@ -49,7 +49,10 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
               Edit
             </Link>
           )}
-          <PrintButton />
+          <PrintButton label="Print" />
+          <a href={`/app/documents/${doc.id}/pdf`} download className="btn btn-ghost">
+            Download PDF
+          </a>
           {doc.status === "brouillon" && (
             <StatusButton
               id={doc.id}

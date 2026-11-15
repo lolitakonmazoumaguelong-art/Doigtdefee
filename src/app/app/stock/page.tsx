@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui";
+import { SearchBox, matchesQuery } from "@/components/search-box";
 import { requireSession } from "@/lib/auth";
 import { categoryLabel } from "@/lib/catalog";
 import { formatMoney } from "@/lib/format";
@@ -7,9 +8,11 @@ import { getStockOverview } from "@/lib/stock";
 
 export const metadata = { title: "Stock" };
 
-export default async function StockPage({ searchParams }: { searchParams: Promise<{ vue?: string }> }) {
+export default async function StockPage({ searchParams }: { searchParams: Promise<{ vue?: string; q?: string }> }) {
   const { org } = await requireSession();
-  const view = (await searchParams).vue;
+  const params = await searchParams;
+  const view = params.vue;
+  const q = (params.q ?? "").trim();
   const everything = await getStockOverview(org.id);
 
   const active = everything.filter((p) => !p.archived);
@@ -17,8 +20,9 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
   const goods = active.filter((p) => p.kind === "produit");
   const toOrder = goods.filter((p) => p.toOrder > 0);
   const stockValue = goods.reduce((s, p) => s + Math.max(p.stock, 0) * p.costPrice, 0);
-  const shown =
+  const inView =
     view === "prestations" ? active.filter((p) => p.kind === "service") : view === "arretes" ? archived : active;
+  const shown = q ? inView.filter((p) => matchesQuery(q, p.name, p.reference, p.supplier, categoryLabel(p.category))) : inView;
 
   const tabs = [
     { id: undefined, label: `Catalogue (${active.length})` },
@@ -38,6 +42,9 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
         <div className="flex flex-wrap gap-2">
           <Link href="/app/stock/reorder" className={`btn ${toOrder.length ? "btn-accent" : "btn-ghost"}`}>
             To order ({toOrder.length})
+          </Link>
+          <Link href="/app/stock/import" className="btn btn-ghost">
+            Import a list
           </Link>
           <Link href="/app/stock/new" className="btn btn-primary">
             Add an item
@@ -59,6 +66,8 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
         ))}
       </nav>
 
+      {everything.length > 0 && <SearchBox q={q} placeholder="Search by name, reference, supplier..." hidden={{ vue: view }} />}
+
       {shown.length === 0 ? (
         <div className="card p-8 text-center">
           <p className="font-display text-2xl">
@@ -69,7 +78,9 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
               ? "Add your cameras, recorders, cables and installation packages to use them in your quotes."
               : view === "arretes"
                 ? "Products you discontinue will appear here, with their history."
-                : "No items in this view."}
+                : q
+                  ? `No item matches “${q}”.`
+                  : "No items in this view."}
           </p>
         </div>
       ) : (

@@ -60,7 +60,7 @@ export function Badge({ label, tone }: { label: string; tone: Tone }) {
   );
 }
 
-export function PrintButton({ label = "Print / PDF" }: { label?: string }) {
+export function PrintButton({ label = "Print" }: { label?: string }) {
   return (
     <button type="button" className="btn btn-ghost" onClick={() => window.print()}>
       {label}

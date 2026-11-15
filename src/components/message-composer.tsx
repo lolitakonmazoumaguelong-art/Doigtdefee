@@ -26,7 +26,7 @@ export function MessageComposer({ canPin, count }: { canPin: boolean; count: num
   return (
     <form
       action={action}
-      className="card sticky bottom-4 space-y-3 p-4 shadow-sm"
+      className="card sticky bottom-20 md:bottom-4 space-y-3 p-4 shadow-sm"
       onKeyDown={(e) => {
         if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) e.currentTarget.requestSubmit();
       }}

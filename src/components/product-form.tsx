@@ -187,8 +187,13 @@ export function ProductForm({
         </div>
       )}
       <FormError message={state?.error} />
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <SubmitButton pending={pending}>{product ? "Save" : "Add item"}</SubmitButton>
+        {!product && (
+          <button name="again" value="1" disabled={pending} className="btn btn-ghost">
+            Save and add another
+          </button>
+        )}
         <Link href={product ? `/app/stock/${product.id}` : "/app/stock"} className="btn btn-ghost">
           Cancel
         </Link>

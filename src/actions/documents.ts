@@ -27,7 +27,7 @@ const docSchema = z.object({
   dueDate: z.union([z.literal(""), z.iso.date("Invalid due date.")]),
   taxRate: z.coerce.number("Invalid VAT rate.").min(0).max(100),
   notes: z.string().trim().max(2000),
-  items: z.array(itemSchema).min(1, "Add at least one line.").max(100),
+  items: z.array(itemSchema).min(1, "Add at least one line.").max(500, "Too many lines (500 max)."),
 });
 
 async function nextNumber(tx: Tx, orgId: string, type: DocType, year: number) {

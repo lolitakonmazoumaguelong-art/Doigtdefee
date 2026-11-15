@@ -1,19 +1,23 @@
 import Link from "next/link";
 import { DocList } from "@/components/doc-row";
+import { SearchBox, matchesQuery } from "@/components/search-box";
 import { requireSession } from "@/lib/auth";
 import { listDocuments } from "@/lib/queries";
 
 export const metadata = { title: "Quotes & invoices" };
 
-export default async function DocumentsPage({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
+export default async function DocumentsPage({ searchParams }: { searchParams: Promise<{ type?: string; q?: string }> }) {
   const { org } = await requireSession();
-  const param = (await searchParams).type;
+  const params = await searchParams;
+  const param = params.type;
+  const q = (params.q ?? "").trim();
   const type = param === "devis" || param === "facture" ? param : undefined;
-  const docs = await listDocuments(org.id, { type });
+  const all = await listDocuments(org.id, { type });
+  const docs = q ? all.filter((d) => matchesQuery(q, d.number, d.clientName)) : all;
 
   const tabs = [
     { id: undefined, label: "All" },
-    { id: "devis", label: "Quote" },
+    { id: "devis", label: "Quotes" },
     { id: "facture", label: "Invoices" },
   ];
 
@@ -42,6 +46,8 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
           </Link>
         ))}
       </nav>
+
+      {all.length > 0 && <SearchBox q={q} placeholder="Search by number or client..." hidden={{ type }} />}
 
       {docs.length === 0 ? (
         <div className="card p-8 text-center">
