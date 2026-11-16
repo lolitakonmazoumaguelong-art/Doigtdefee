@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { deleteCompany } from "@/actions/settings";
 import { addMember, changePassword, removeMember, resetMemberPassword } from "@/actions/team";
 import { ConfirmButton, FormError } from "@/components/ui";
 
@@ -137,6 +138,50 @@ export function PasswordPanel() {
           <Saved show={state?.ok} text="Password changed." />
         </div>
       </form>
+    </section>
+  );
+}
+
+/** Zone sensible : effacer l'entreprise et toutes ses données, sans retour possible. */
+export function DeleteCompanyPanel({ companyName }: { companyName: string }) {
+  const [open, setOpen] = useState(false);
+  const [state, action, pending] = useActionState(deleteCompany, undefined);
+
+  return (
+    <section className="max-w-xl rounded-2xl border border-clay/40 bg-card p-5 sm:p-6">
+      <h2 className="font-display text-2xl">Delete this company</h2>
+      <p className="mt-1 text-sm text-muted">
+        This permanently erases the company, every user, client, quote, invoice, payment, stock item and message. It cannot be undone. Download a full backup first if you may need the data.
+      </p>
+      {!open ? (
+        <button type="button" className="btn btn-danger mt-4" onClick={() => setOpen(true)}>
+          I want to delete everything
+        </button>
+      ) : (
+        <form action={action} className="mt-4 space-y-3">
+          <div>
+            <label className="label" htmlFor="confirm">
+              Type the company name: {companyName}
+            </label>
+            <input id="confirm" name="confirm" className="input" autoComplete="off" required />
+          </div>
+          <div>
+            <label className="label" htmlFor="delete-password">
+              Your password
+            </label>
+            <input id="delete-password" name="password" type="password" className="input" autoComplete="current-password" required />
+          </div>
+          <FormError message={state?.error} />
+          <div className="flex gap-2">
+            <button className="btn btn-danger" disabled={pending}>
+              {pending ? "Deleting..." : "Delete the company and all its data"}
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => setOpen(false)}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
     </section>
   );
 }

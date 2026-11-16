@@ -1,5 +1,5 @@
 import { SettingsForm } from "@/components/settings-form";
-import { PasswordPanel, TeamPanel } from "@/components/team-panel";
+import { DeleteCompanyPanel, PasswordPanel, TeamPanel } from "@/components/team-panel";
 import { requireSession } from "@/lib/auth";
 import { listMembers } from "@/lib/queries";
 
@@ -64,6 +64,7 @@ export default async function SettingsPage() {
         </>
       )}
       <PasswordPanel />
+      {isOwner && <DeleteCompanyPanel companyName={org.name} />}
     </div>
   );
 }

@@ -30,6 +30,11 @@ export async function signup(_prev: FormState, formData: FormData): Promise<Form
 
   const db = await getDb();
   const { company, name, email, password, currency } = parsed.data;
+  // Installation dédiée à un seul client : une fois son entreprise créée, plus d'inscription
+  if (process.env.SIGNUP_CLOSED === "1") {
+    const [{ n }] = await db.select({ n: count() }).from(schema.orgs);
+    if (n > 0) return { error: "Sign-ups are closed on this installation. Ask the owner to create a login for you." };
+  }
   const existing = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, email));
   if (existing.length) return { error: "An account already exists with this email." };
 

@@ -66,9 +66,15 @@ function QuotePreview() {
   );
 }
 
-export default function LandingPage() {
+export default async function LandingPage({ searchParams }: { searchParams: Promise<{ deleted?: string }> }) {
+  const deleted = (await searchParams).deleted;
   return (
     <div className="flex flex-1 flex-col">
+      {deleted && (
+        <p role="status" className="bg-ink px-4 py-3 text-center text-sm text-paper">
+          Your company and all its data have been permanently deleted.
+        </p>
+      )}
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
         <Logo />
         <nav className="flex items-center gap-2">

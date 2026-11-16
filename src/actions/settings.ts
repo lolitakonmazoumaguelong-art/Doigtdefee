@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@/db";
-import { requireSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { destroySession, requireSession, verifyPassword } from "@/lib/auth";
 import { CURRENCY_CODES, parseNumber } from "@/lib/format";
 import type { FormState } from "@/lib/types";
 
@@ -52,4 +53,28 @@ export async function saveSettings(_prev: FormState, formData: FormData): Promis
   await db.update(schema.orgs).set(parsed.data).where(eq(schema.orgs.id, org.id));
   revalidatePath("/app", "layout");
   return { ok: true };
+}
+
+/**
+ * Suppression définitive de l'entreprise et de toutes ses données (droit à l'effacement).
+ * Réservée au responsable, protégée par le nom de l'entreprise et son mot de passe.
+ */
+export async function deleteCompany(_prev: FormState, formData: FormData): Promise<FormState> {
+  const { org, user } = await requireSession();
+  if (user.role !== "owner") return { error: "Only the account owner can delete the company." };
+  if (String(formData.get("confirm") ?? "").trim() !== org.name) {
+    return { error: "Type the company name exactly as shown to confirm." };
+  }
+  if (!(await verifyPassword(String(formData.get("password") ?? ""), user.passwordHash))) {
+    return { error: "The password is incorrect." };
+  }
+
+  const db = await getDb();
+  await db.transaction(async (tx) => {
+    // Les documents d'abord (ils retiennent les clients), puis l'entreprise : le reste suit en cascade
+    await tx.delete(schema.documents).where(eq(schema.documents.orgId, org.id));
+    await tx.delete(schema.orgs).where(eq(schema.orgs.id, org.id));
+  });
+  await destroySession();
+  redirect("/?deleted=1");
 }
